@@ -1,0 +1,271 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  :root { --bg:#0B1220; --panel:#111A2B; --panel2:#16223A; --line:rgba(148,163,184,.2); --text:#E6EDF7; --muted:#94A3B8;
+          --cyan:#22D3EE; --amber:#F5B041; --blue:#60A5FA; --teal:#2DD4BF; --red:#F87171; --violet:#A78BFA; --green:#34D399; }
+  html,body { margin:0; background:transparent; color:var(--text); font-family:'IBM Plex Sans',system-ui,'Segoe UI',sans-serif; }
+  .wrap { display:flex; gap:10px; height:510px; box-sizing:border-box; }
+  .palette { width:150px; display:flex; flex-direction:column; gap:7px; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:10px; }
+  .palette h4 { margin:0 0 2px; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+  .chip { display:flex; align-items:center; gap:8px; border-radius:10px; padding:7px 8px; cursor:grab; font-weight:600; font-size:13px;
+          border:1px solid var(--line); background:var(--panel2); user-select:none; }
+  .chip:hover { border-color:var(--cyan); }
+  .chip svg { width:26px; height:22px; flex:none; }
+  .hint { color:var(--muted); font-size:11.5px; line-height:1.4; margin-top:auto; }
+  #board { position:relative; flex:1; border-radius:14px; overflow:hidden; border:1px solid var(--line);
+           background: radial-gradient(circle at 1px 1px, rgba(148,163,184,.16) 1px, transparent 0) 0 0/22px 22px, #0D1524; }
+  #empty { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:14px; pointer-events:none; text-align:center; }
+  #stage { position:absolute; left:0; top:0; transform-origin:0 0; }
+  svg.wires { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; overflow:visible; }
+  .zoom { position:absolute; right:10px; bottom:10px; display:flex; gap:4px; z-index:5; }
+  .zoom button { background:var(--panel2); color:var(--text); border:1px solid var(--line); border-radius:8px; min-width:30px; height:28px; cursor:pointer;
+                 font:600 12px 'IBM Plex Sans',system-ui,sans-serif; }
+  .zoom button:hover { border-color:var(--cyan); }
+  .zoom span { align-self:center; color:var(--muted); font:11px 'IBM Plex Mono',monospace; padding:0 4px; }
+  svg.wires path.hit { pointer-events:stroke; cursor:pointer; stroke:transparent; stroke-width:14; fill:none; }
+  svg.wires path.w { fill:none; stroke-width:3.2; stroke-dasharray:9 9; animation:flow 1.1s linear infinite; }
+  svg.wires path.bg { fill:none; stroke:#1E2B45; stroke-width:7; }
+  svg.wires path.hit:hover + path.bg { stroke:rgba(248,113,113,.4); }
+  @keyframes flow { to { stroke-dashoffset:-18; } }
+  .elab { font-family:'IBM Plex Mono',monospace; font-size:10.5px; fill:var(--text); }
+  .node { position:absolute; width:178px; border-radius:12px; background:linear-gradient(180deg,#18243C,#121C30); border:1px solid var(--line);
+          box-shadow:0 10px 24px rgba(0,0,0,.35); font-size:12px; }
+  .node.sel { box-shadow:0 0 0 2px rgba(34,211,238,.55), 0 10px 24px rgba(0,0,0,.35); }
+  .node header { display:flex; align-items:center; gap:7px; padding:7px 8px; cursor:grab; border-bottom:1px solid var(--line); border-radius:12px 12px 0 0; }
+  .node header svg { width:22px; height:18px; flex:none; }
+  .node header b { flex:1; font-size:13px; }
+  .node .x { border:0; background:transparent; color:var(--muted); cursor:pointer; font-size:16px; line-height:1; padding:0 2px; }
+  .node .x:hover { color:var(--red); }
+  .body { display:grid; grid-template-columns:1fr 1fr; gap:4px 6px; padding:6px 8px 8px; }
+  .body label { display:block; font-size:10.5px; color:var(--muted); }
+  .body label.full { grid-column:1 / span 2; }
+  .body input[type=number] { width:100%; box-sizing:border-box; background:#0B1220; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:3px 5px;
+          font-family:'IBM Plex Mono',monospace; font-size:12px; }
+  .body input:focus { outline:none; border-color:var(--cyan); }
+  .chk { display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--text); grid-column:1 / span 2; }
+  .badge { margin:0 8px 8px; padding:4px 7px; border-radius:7px; background:rgba(34,211,238,.09); border:1px solid rgba(34,211,238,.25);
+           font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--cyan); display:none; }
+  .port { position:absolute; width:14px; height:14px; border-radius:50%; border:2px solid #E6EDF7; cursor:crosshair; z-index:3; }
+  .port:hover { transform:scale(1.25); }
+  .pin { left:-9px; top:12px; background:var(--blue); }
+  .pout { right:-9px; top:12px; background:var(--cyan); }
+  .pside { left:50%; bottom:-9px; margin-left:-7px; background:var(--amber); }
+  .k-feed { border-color:rgba(96,165,250,.55); } .k-cstr { border-color:rgba(34,211,238,.55); } .k-pfr { border-color:rgba(167,139,250,.6); }
+  .k-bed { border-color:rgba(245,176,65,.55); } .k-split { border-color:rgba(148,163,184,.6); } .k-product { border-color:rgba(52,211,153,.6); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="palette" id="palette">
+    <h4>Blocks</h4>
+    <p class="hint">Drag a block onto the board. Drag from a coloured dot on the right (or the amber dot underneath a splitter) to the blue dot of the next block. Click a pipe to delete it.</p>
+  </div>
+  <div id="board"><div id="stage"><svg class="wires" id="wires"></svg></div><div id="empty">Drag a Feed, some reactors and a Product here</div>
+    <div class="zoom"><span id="zl">100%</span><button data-z="out" title="Zoom out">−</button><button data-z="fit" title="Fit the whole plant">Fit</button><button data-z="in" title="Zoom in">+</button></div></div>
+</div>
+<script>
+const ICON = {
+  feed: '<svg viewBox="0 0 26 22"><circle cx="9" cy="11" r="7" fill="none" stroke="#60A5FA" stroke-width="2"/><path d="M16 11h9M21 7l4 4-4 4" stroke="#60A5FA" stroke-width="2" fill="none"/></svg>',
+  cstr: '<svg viewBox="0 0 26 22"><rect x="4" y="3" width="18" height="17" rx="4" fill="none" stroke="#22D3EE" stroke-width="2"/><path d="M13 3v11M8 14h10" stroke="#22D3EE" stroke-width="2"/></svg>',
+  pfr:  '<svg viewBox="0 0 26 22"><path d="M2 11c3-8 5 8 8 0s5 8 8 0 5 8 6 0" fill="none" stroke="#A78BFA" stroke-width="2.2"/></svg>',
+  bed:  '<svg viewBox="0 0 26 22"><rect x="2" y="5" width="22" height="12" rx="4" fill="none" stroke="#F5B041" stroke-width="2"/><circle cx="8" cy="11" r="2" fill="#F5B041"/><circle cx="13" cy="9" r="2" fill="#F5B041"/><circle cx="18" cy="12" r="2" fill="#F5B041"/></svg>',
+  split:'<svg viewBox="0 0 26 22"><path d="M2 11h10M12 11l10-7M12 11l10 7" stroke="#94A3B8" stroke-width="2.2" fill="none"/></svg>',
+  product:'<svg viewBox="0 0 26 22"><path d="M2 11h9M7 7l4 4-4 4" stroke="#34D399" stroke-width="2" fill="none"/><rect x="14" y="4" width="10" height="14" rx="3" fill="none" stroke="#34D399" stroke-width="2"/></svg>'
+};
+const LABEL = { feed:"Feed", cstr:"CSTR", pfr:"PFR", bed:"Packed bed", split:"Splitter", product:"Product" };
+const DEF = {
+  feed: { Q:0.4, CA:0.05, CB:0.05, T:30 }, cstr: { V:2.0, T:30, jacket:false, UA:500, Ta:30 },
+  pfr: { V:0.5, T:30 }, bed: { V:0.5, T:30, Pe:40 }, split: { f:0.5 }, product: {}
+};
+const FIELDS = {
+  feed: [["Q","Flow L/min",0.001,100,0.05],["T","T °C",0,150,1],["CA","NaOH mol/L",0,10,0.01],["CB","Ester mol/L",0,10,0.01]],
+  cstr: [["V","Volume L",0.01,1000,0.1],["T","T °C",0,150,1]],
+  pfr:  [["V","Volume L",0.01,1000,0.05],["T","T °C",0,150,1]],
+  bed:  [["V","Volume L",0.01,1000,0.05],["T","T °C",0,150,1],["Pe","Peclet",0.1,5000,1,true]],
+  split:[["f","Side fraction",0,0.99,0.05,true]],
+  product: []
+};
+const OUTS = { feed:["out"], cstr:["out"], pfr:["out"], bed:["out"], split:["out","side"], product:[] };
+const board = document.getElementById("board"), stage = document.getElementById("stage"), wires = document.getElementById("wires");
+let state = { nodes:[], edges:[], version:0 }, loadedVersion = null, results = {};
+let drag = null, link = null, mouse = null, Z = 1;
+
+function local(ev) { const r = board.getBoundingClientRect(); return { x:(ev.clientX - r.left) / Z, y:(ev.clientY - r.top) / Z }; }
+function area() { const r = board.getBoundingClientRect(); return { w:r.width / Z, h:r.height / Z }; }
+function applyZ() {
+  const r = board.getBoundingClientRect();
+  stage.style.transform = `scale(${Z})`; stage.style.width = (r.width / Z) + "px"; stage.style.height = (r.height / Z) + "px";
+  document.getElementById("zl").textContent = Math.round(Z * 100) + "%";
+  drawWires();
+}
+function fit() {
+  const r = board.getBoundingClientRect();
+  let mx = 1, my = 1;
+  stage.querySelectorAll(".node").forEach(e => { mx = Math.max(mx, e.offsetLeft + e.offsetWidth + 24); my = Math.max(my, e.offsetTop + e.offsetHeight + 60); });
+  Z = state.nodes.length ? Math.max(0.4, Math.min(1, r.width / mx, r.height / my)) : 1;
+  applyZ();
+}
+document.querySelectorAll(".zoom button").forEach(b => b.addEventListener("click", () => {
+  const z = b.dataset.z;
+  if (z === "fit") fit(); else { Z = Math.max(0.4, Math.min(1.4, Z * (z === "in" ? 1.15 : 1 / 1.15))); applyZ(); }
+}));
+window.addEventListener("resize", applyZ);
+
+function post(type, extra) { window.parent.postMessage(Object.assign({ isStreamlitMessage:true, type:type }, extra||{}), "*"); }
+function send() { post("streamlit:setComponentValue", { value: JSON.parse(JSON.stringify(state)), dataType:"json" }); }
+function names() { const c = {}, out = {}; state.nodes.forEach(n => { c[n.kind] = (c[n.kind]||0) + 1; out[n.id] = LABEL[n.kind] + " " + c[n.kind]; }); return out; }
+
+const pal = document.getElementById("palette"), hint = pal.querySelector(".hint");
+Object.keys(LABEL).forEach(k => {
+  const d = document.createElement("div"); d.className = "chip"; d.draggable = true; d.dataset.kind = k;
+  d.innerHTML = ICON[k] + LABEL[k];
+  d.addEventListener("dragstart", ev => ev.dataTransfer.setData("kind", k));
+  pal.insertBefore(d, hint);
+});
+board.addEventListener("dragover", ev => ev.preventDefault());
+board.addEventListener("drop", ev => {
+  ev.preventDefault();
+  const kind = ev.dataTransfer.getData("kind"); if (!kind || state.nodes.length >= 14) return;
+  const p = local(ev), A = area();
+  state.nodes.push(Object.assign({ id:"n" + Date.now().toString(36), kind:kind,
+    x:Math.round(Math.max(6, Math.min(A.w - 186, p.x - 80))), y:Math.round(Math.max(6, Math.min(A.h - 120, p.y - 16))) }, JSON.parse(JSON.stringify(DEF[kind]))));
+  paint(); send();
+});
+
+function paint() {
+  board.querySelectorAll(".node").forEach(e => e.remove());
+  document.getElementById("empty").style.display = state.nodes.length ? "none" : "flex";
+  const nm = names();
+  state.nodes.forEach(n => {
+    const e = document.createElement("div"); e.className = "node k-" + n.kind; e.dataset.id = n.id;
+    e.style.left = n.x + "px"; e.style.top = n.y + "px";
+    let body = "";
+    (FIELDS[n.kind] || []).forEach(f => {
+      body += `<label class="${f[5] ? "full" : ""}">${f[1]}<input type="number" data-k="${f[0]}" min="${f[2]}" max="${f[3]}" step="${f[4]}" value="${n[f[0]]}"></label>`;
+    });
+    if (n.kind === "cstr") {
+      body += `<label class="chk"><input type="checkbox" data-k="jacket" ${n.jacket ? "checked" : ""}> Cooling / heating jacket</label>`;
+      if (n.jacket) body += `<label>UA J/min/K<input type="number" data-k="UA" min="0" max="1e7" step="10" value="${n.UA}"></label><label>Jacket °C<input type="number" data-k="Ta" min="0" max="150" step="1" value="${n.Ta}"></label>`;
+    }
+    e.innerHTML = `<header>${ICON[n.kind]}<b>${nm[n.id]}</b><button class="x" title="Remove block">×</button></header>` +
+      (body ? `<div class="body">${body}</div>` : "") + `<div class="badge"></div>` +
+      (n.kind !== "feed" ? `<div class="port pin" title="Inlet: pipes arriving here mix"></div>` : "") +
+      (OUTS[n.kind].includes("out") ? `<div class="port pout" data-port="out" title="Outlet"></div>` : "") +
+      (n.kind === "split" ? `<div class="port pside" data-port="side" title="Side outlet: recycle or bypass"></div>` : "");
+    stage.appendChild(e);
+    const hd = e.querySelector("header");
+    hd.addEventListener("pointerdown", ev => {
+      if (ev.target.classList.contains("x")) return;
+      const p = local(ev);
+      drag = { n:n, e:e, dx:p.x - n.x, dy:p.y - n.y, moved:false };
+      hd.setPointerCapture(ev.pointerId);
+    });
+    hd.addEventListener("pointermove", ev => {
+      if (!drag || drag.n !== n) return;
+      const p = local(ev), A = area();
+      n.x = Math.round(Math.max(4, Math.min(A.w - 182, p.x - drag.dx)));
+      n.y = Math.round(Math.max(4, Math.min(A.h - 60, p.y - drag.dy)));
+      e.style.left = n.x + "px"; e.style.top = n.y + "px"; drag.moved = true; drawWires();
+    });
+    hd.addEventListener("pointerup", () => { if (drag && drag.n === n) { const mv = drag.moved; drag = null; if (mv) send(); } });
+    e.querySelector(".x").addEventListener("click", () => {
+      state.nodes = state.nodes.filter(m => m.id !== n.id);
+      state.edges = state.edges.filter(x => x.from !== n.id && x.to !== n.id);
+      paint(); send();
+    });
+    e.querySelectorAll("input").forEach(inp => inp.addEventListener("change", ev => {
+      const k = ev.target.dataset.k;
+      if (ev.target.type === "checkbox") { n[k] = ev.target.checked; paint(); }
+      else { const v = parseFloat(ev.target.value); if (!isNaN(v)) n[k] = v; }
+      send();
+    }));
+    e.querySelectorAll(".pout,.pside").forEach(p => p.addEventListener("pointerdown", ev => {
+      ev.stopPropagation(); ev.preventDefault(); link = { from:n.id, port:p.dataset.port };
+    }));
+    const pin = e.querySelector(".pin");
+    if (pin) pin.addEventListener("pointerup", ev => {
+      ev.stopPropagation();
+      if (link && link.from !== n.id) {
+        state.edges = state.edges.filter(x => !(x.from === link.from && (x.port || "out") === link.port));
+        state.edges.push({ from:link.from, to:n.id, port:link.port });
+        send();
+      }
+      link = null; mouse = null; drawWires();
+    });
+  });
+  drawWires(); showResults();
+}
+
+function portXY(id, which) {
+  const e = board.querySelector(`.node[data-id="${id}"]`); if (!e) return null;
+  const sel = which === "in" ? ".pin" : which === "side" ? ".pside" : ".pout";
+  const p = e.querySelector(sel); if (!p) return null;
+  const rb = board.getBoundingClientRect(), rp = p.getBoundingClientRect();
+  return { x: (rp.left - rb.left + rp.width/2) / Z, y: (rp.top - rb.top + rp.height/2) / Z };
+}
+function route(a, b, side) {
+  if (side) {
+    const dy = Math.max(40, (b.y - a.y) / 2 + 40);
+    return `M ${a.x} ${a.y} C ${a.x} ${a.y + dy}, ${b.x - 70} ${b.y}, ${b.x} ${b.y}`;
+  }
+  if (b.x > a.x + 20) { const c = Math.max(40, (b.x - a.x) / 2); return `M ${a.x} ${a.y} C ${a.x + c} ${a.y}, ${b.x - c} ${b.y}, ${b.x} ${b.y}`; }
+  const low = Math.max(a.y, b.y) + 90;
+  return `M ${a.x} ${a.y} C ${a.x + 90} ${a.y}, ${a.x + 90} ${low}, ${(a.x + b.x)/2} ${low} S ${b.x - 90} ${b.y}, ${b.x} ${b.y}`;
+}
+function drawWires() {
+  let h = "";
+  const lab = (results && results.edges) || [];
+  state.edges.forEach((e, i) => {
+    const a = portXY(e.from, e.port === "side" ? "side" : "out"), b = portXY(e.to, "in"); if (!a || !b) return;
+    const d = route(a, b, e.port === "side");
+    const col = e.port === "side" ? "#F5B041" : (b.x < a.x ? "#F5B041" : "#22D3EE");
+    h += `<path class="hit" data-i="${i}" d="${d}"><title>Click to delete this pipe</title></path><path class="bg" d="${d}"/><path class="w" d="${d}" stroke="${col}"/>`;
+    const L = lab.find(x => x.from === e.from && x.to === e.to && (x.port || "out") === (e.port || "out"));
+    if (L && L.label) {
+      const mx = (a.x + b.x) / 2, my = e.port === "side" || b.x < a.x ? Math.max(a.y, b.y) + (e.port === "side" ? 30 : 70) : (a.y + b.y) / 2 - 12;
+      const w = L.label.length * 6.4 + 12;
+      h += `<rect x="${mx - w/2}" y="${my - 11}" width="${w}" height="17" rx="8" fill="#0B1220" stroke="rgba(148,163,184,.35)"/><text class="elab" x="${mx}" y="${my + 2}" text-anchor="middle">${L.label}</text>`;
+    }
+  });
+  if (link && mouse) {
+    const a = portXY(link.from, link.port);
+    if (a) h += `<path d="M ${a.x} ${a.y} L ${mouse.x} ${mouse.y}" stroke="#22D3EE" stroke-width="2" fill="none" stroke-dasharray="5 4"/>`;
+  }
+  wires.innerHTML = h;
+  wires.querySelectorAll("path.hit").forEach(p => p.addEventListener("click", () => {
+    state.edges.splice(parseInt(p.dataset.i), 1); drawWires(); send();
+  }));
+}
+function showResults() {
+  const u = (results && results.nodes) || {};
+  board.querySelectorAll(".node").forEach(e => {
+    const b = e.querySelector(".badge"), r = u[e.dataset.id];
+    if (r) { b.textContent = r; b.style.display = "block"; } else { b.style.display = "none"; }
+  });
+  drawWires();
+}
+board.addEventListener("pointermove", ev => {
+  if (!link) return; mouse = local(ev); drawWires();
+});
+board.addEventListener("pointerup", () => { if (link) { link = null; mouse = null; drawWires(); } });
+
+window.addEventListener("message", ev => {
+  if (!ev.data || ev.data.type !== "streamlit:render") return;
+  const a = ev.data.args || {};
+  const p = a.plant;
+  if (p && Array.isArray(p.nodes) && p.version !== loadedVersion && !drag && !link) {
+    state = { nodes:p.nodes.map(n => Object.assign({}, DEF[n.kind] || {}, n)), edges:(p.edges || []).slice(), version:p.version };
+    loadedVersion = p.version; paint(); requestAnimationFrame(fit);
+  }
+  results = a.results || {};
+  showResults();
+  post("streamlit:setFrameHeight", { height: 520 });
+});
+applyZ();
+post("streamlit:componentReady", { apiVersion:1 });
+post("streamlit:setFrameHeight", { height: 520 });
+</script>
+</body>
+</html>

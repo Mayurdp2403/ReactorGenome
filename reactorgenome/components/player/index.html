@@ -1,0 +1,352 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  :root { --bg:#0B1220; --panel:#111A2B; --panel2:#16223A; --line:rgba(148,163,184,.18); --text:#E6EDF7; --muted:#94A3B8;
+          --cyan:#22D3EE; --amber:#F5B041; --blue:#60A5FA; --teal:#2DD4BF; --red:#F87171; }
+  html,body { margin:0; padding:0; background:transparent; color:var(--text); font-family:'IBM Plex Sans',system-ui,'Segoe UI',sans-serif; }
+  #root { background:linear-gradient(180deg,#121C30,#0E1626); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+  #head { display:flex; justify-content:space-between; align-items:center; padding:9px 14px 0; }
+  #title { font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:600; }
+  #clock { font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--cyan); }
+  svg { width:100%; height:270px; display:block; }
+  #bar { display:flex; align-items:center; gap:8px; padding:6px 12px 8px; border-top:1px solid var(--line); background:rgba(11,18,32,.55); }
+  button { background:var(--panel2); color:var(--text); border:1px solid var(--line); border-radius:8px; height:32px; min-width:36px; font-size:15px; cursor:pointer; }
+  button:hover { border-color:var(--cyan); }
+  button.main { background:var(--cyan); color:#04202A; border-color:var(--cyan); font-weight:700; min-width:44px; }
+  input[type=range] { flex:1; accent-color:var(--cyan); }
+  select { background:var(--panel2); color:var(--text); border:1px solid var(--line); border-radius:8px; height:32px; padding:0 6px; }
+  #reads { display:flex; gap:8px; flex-wrap:wrap; padding:0 12px 6px; }
+  .chip { font-family:'IBM Plex Mono',monospace; font-size:12.5px; padding:4px 9px; border-radius:999px; border:1px solid var(--line); background:rgba(22,34,58,.7); }
+  .chip b { color:var(--muted); font-weight:500; margin-right:6px; font-family:'IBM Plex Sans',sans-serif; }
+  canvas { width:100%; height:64px; display:block; }
+  #sparkwrap { padding:0 12px 10px; }
+  #sparklab { font-size:11px; color:var(--muted); margin:0 0 2px; }
+  .lbl { font-size:12px; fill:var(--muted); }
+  .lblb { font-size:13px; fill:var(--text); font-weight:600; }
+  .mono { font-family:'IBM Plex Mono',monospace; }
+</style>
+</head>
+<body>
+<div id="root">
+  <div id="head"><div id="title">Simulation</div><div id="clock">t = 0.00 min</div></div>
+  <svg id="svg" viewBox="0 0 800 270" preserveAspectRatio="xMidYMid meet"></svg>
+  <div id="reads"></div>
+  <div id="sparkwrap"><div id="sparklab"></div><canvas id="spark"></canvas></div>
+  <div id="bar">
+    <button id="reset" title="Back to the start">&#x27F2;</button>
+    <button id="play" class="main" title="Play or pause">&#9654;</button>
+    <button id="step" title="One frame forward">&#x23ED;</button>
+    <input id="scrub" type="range" min="0" max="1000" value="0" title="Drag to any moment">
+    <select id="speed" title="Playback speed">
+      <option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option>
+      <option value="2">2×</option><option value="4">4×</option>
+    </select>
+  </div>
+</div>
+<script>
+const NS = "http://www.w3.org/2000/svg";
+const svg = document.getElementById("svg");
+let D = null, sig = null, simT = 0, playing = false, speed = 1, last = null, phase = 0;
+const C = { water:[16,35,59], naoh:[96,165,250], prod:[45,212,191], tracer:[245,176,65] };
+
+function post(type, extra) { window.parent.postMessage(Object.assign({ isStreamlitMessage:true, type:type }, extra||{}), "*"); }
+function height() { post("streamlit:setFrameHeight", { height: document.getElementById("root").scrollHeight + 4 }); }
+
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  (parent || svg).appendChild(e); return e;
+}
+function txt(x, y, s, cls, parent, anchor) { const t = el("text", { x:x, y:y, class:cls||"lbl", "text-anchor":anchor||"middle" }, parent); t.textContent = s; return t; }
+function rgb(c) { return "rgb(" + c.map(v => Math.round(v)).join(",") + ")"; }
+function mixColor(a, c) {
+  a = Math.max(0, Math.min(1, a||0)); c = Math.max(0, Math.min(1, c||0));
+  const w = Math.max(0, 1 - a - c), s = a + c + w || 1;
+  return rgb([0,1,2].map(i => (a*C.naoh[i] + c*C.prod[i] + w*C.water[i]) / s));
+}
+function tracerColor(v) { v = Math.max(0, Math.min(1, v||0)); return rgb([0,1,2].map(i => C.water[i] + v*(C.tracer[i]-C.water[i]))); }
+function tempColor(T) { const f = Math.max(0, Math.min(1, ((T||25) - 20) / 80)); return rgb([96 + f*152, 165 - f*52, 250 - f*137]); }
+
+// frame interpolation
+function idx(t) {
+  const ts = D.t, n = ts.length;
+  if (n < 2 || t <= ts[0]) return [0, 0, 0];
+  if (t >= ts[n-1]) return [n-1, n-1, 0];
+  let lo = 0, hi = n-1;
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (ts[m] <= t) lo = m; else hi = m; }
+  return [lo, hi, (t - ts[lo]) / (ts[hi] - ts[lo])];
+}
+function at(arr, t) {
+  if (!arr) return null;
+  const [i, j, f] = idx(t), a = arr[i], b = arr[j];
+  if (Array.isArray(a)) return a.map((v, k) => v + f * (b[k] - v));
+  return a + f * (b - a);
+}
+
+let parts = {};
+function pipe(d, color, width, dash) {
+  const base = el("path", { d:d, fill:"none", stroke:"#1C2A44", "stroke-width":width+6, "stroke-linecap":"round" });
+  const flow = el("path", { d:d, fill:"none", stroke:color, "stroke-width":width, "stroke-linecap":"round", "stroke-dasharray":dash||"10 12", class:"flow" });
+  return flow;
+}
+function impeller(cx, cy, r, parent) {
+  const g = el("g", {}, parent);
+  el("line", { x1:cx, y1:cy - r*3.4, x2:cx, y2:cy, stroke:"#CBD5E1", "stroke-width":3 }, g);
+  const blades = el("g", {}, g);
+  el("rect", { x:cx - r, y:cy - 3, width:2*r, height:6, rx:3, fill:"#E2E8F0" }, blades);
+  el("rect", { x:cx - 3, y:cy - r*0.45, width:6, height:r*0.9, rx:3, fill:"#94A3B8" }, blades);
+  return { blades:blades, cx:cx, cy:cy };
+}
+
+function buildCSTR() {
+  const m = D.cstr, N = m.n;
+  el("defs", {}).innerHTML = '<pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="rgba(148,163,184,.45)" stroke-width="2"/></pattern>';
+  parts.flows = [];
+  parts.flows.push(pipe("M 20 70 L 150 70 Q 175 70 175 95 L 175 118", "#60A5FA", 6));
+  parts.flows.push(pipe("M 20 166 L 150 166 Q 175 166 175 141 L 175 132", "#F5B041", 6));
+  txt(60, 58, "NaOH", "lblb"); txt(72, 190, "Ethyl acetate", "lblb");
+  txt(60, 86, m.qA_txt||"", "lbl mono"); txt(72, 206, m.qB_txt||"", "lbl mono");
+  const x0 = 220, x1 = 600, top = 52, bot = 236;
+  const gap = 18, w = Math.min(210, (x1 - x0 - gap*(N-1)) / N);
+  parts.tanks = [];
+  for (let i = 0; i < N; i++) {
+    const tx = x0 + i*(w + gap), g = el("g", {});
+    if (m.jacket) parts.jacket = (parts.jacket || []).concat([el("rect", { x:tx-7, y:top+18, width:w+14, height:bot-top-12, rx:18, fill:"none", stroke:"#60A5FA", "stroke-width":5, opacity:.85 }, g)]);
+    el("rect", { x:tx, y:top, width:w, height:bot-top, rx:16, fill:"#0E1830", stroke:"#3B4B66", "stroke-width":2 }, g);
+    const liq = el("rect", { x:tx+4, y:top+26, width:w-8, height:bot-top-30, rx:12, fill:mixColor(0,0) }, g);
+    let stag = null;
+    if (i === 0 && m.stagnant > 0) {
+      const sw = (w-8) * Math.min(0.9, Math.sqrt(m.stagnant)), sh = (bot-top-30) * Math.min(0.9, Math.sqrt(m.stagnant));
+      const sx = tx + w - 4 - sw, sy = bot - 4 - sh;
+      stag = el("rect", { x:sx, y:sy, width:sw, height:sh, rx:8, fill:"#1B2436" }, g);
+      el("rect", { x:sx, y:sy, width:sw, height:sh, rx:8, fill:"url(#hatch)", stroke:"rgba(148,163,184,.5)", "stroke-dasharray":"4 4" }, g);
+      txt(sx + sw/2, sy + sh/2 + 4, m.dead ? "dead" : "stagnant", "lbl", g);
+    }
+    const imp = impeller(tx + w*0.4, bot - 46, Math.min(26, w*0.22), g);
+    if (i < N - 1) parts.flows.push(pipe(`M ${tx+w} ${bot-30} L ${tx+w+gap} ${bot-30}`, "#94A3B8", 4, "6 8"));
+    parts.tanks.push({ liq:liq, stag:stag, imp:imp });
+  }
+  parts.flows.push(pipe(`M 175 125 L ${x0} 125`, "#94A3B8", 6));
+  const xe = x0 + N*w + (N-1)*gap;
+  parts.out = pipe(`M ${xe} ${bot-30} L 770 ${bot-30}`, "#2DD4BF", 7);
+  parts.flows.push(parts.out);
+  parts.probe = el("circle", { cx:700, cy:bot-30, r:10, fill:"#0B1220", stroke:"#22D3EE", "stroke-width":2.5 });
+  el("line", { x1:700, y1:bot-40, x2:700, y2:bot-70, stroke:"#22D3EE", "stroke-width":2 });
+  parts.probeTxt = txt(700, bot-78, "", "lblb mono");
+  txt(738, bot-8, "Outlet", "lbl");
+  if (m.bypass > 0) {
+    const bp = pipe(`M 175 118 L 175 26 Q 175 14 190 14 L 640 14 Q 655 14 655 28 L 655 ${bot-30}`, "#F5B041", 3, "4 9");
+    parts.flows.push(bp);
+    txt(420, 32, "bypass " + Math.round(m.bypass*100) + "%", "lbl");
+  }
+  if (m.jacket) parts.Ttxt = txt(x0 + w/2, bot + 22, "", "lbl mono");
+}
+
+function drawCSTR(t) {
+  const m = D.cstr;
+  const ta = at(m.tanks_a, t), tc = at(m.tanks_c, t);
+  parts.tanks.forEach((p, i) => {
+    p.liq.setAttribute("fill", mixColor(ta[i], tc[i]));
+    if (p.stag && !m.dead && m.stag_a) p.stag.setAttribute("fill", mixColor(at(m.stag_a, t), at(m.stag_c, t)));
+    p.imp.blades.setAttribute("transform", `translate(${p.imp.cx} ${p.imp.cy}) scale(${Math.cos(phase*9.4)} 1) translate(${-p.imp.cx} ${-p.imp.cy})`);
+  });
+  const oa = at(m.out_a, t), oc = at(m.out_c, t);
+  parts.out.setAttribute("stroke", mixColor(oa, oc));
+  if (m.lam) parts.probeTxt.textContent = at(m.lam, t).toFixed(3) + " mS/cm";
+  if (m.jacket && m.T) {
+    const T = at(m.T, t);
+    (parts.jacket || []).forEach(j => j.setAttribute("stroke", tempColor(T)));
+    if (parts.Ttxt) parts.Ttxt.textContent = "jacket · tank " + T.toFixed(1) + " °C";
+  }
+}
+
+function buildBatch() {
+  const g = el("g", {});
+  el("path", { d:"M 300 30 L 300 230 Q 300 250 320 250 L 480 250 Q 500 250 500 230 L 500 30", fill:"#0E1830", stroke:"#3B4B66", "stroke-width":3 }, g);
+  parts.liq = el("path", { d:"M 304 70 L 304 228 Q 304 246 322 246 L 478 246 Q 496 246 496 228 L 496 70 Z", fill:mixColor(1,0) }, g);
+  parts.bar = el("rect", { x:370, y:232, width:60, height:9, rx:4.5, fill:"#E2E8F0" }, g);
+  el("rect", { x:340, y:256, width:120, height:10, rx:5, fill:"#1C2A44" }, g);
+  el("line", { x1:455, y1:6, x2:455, y2:170, stroke:"#22D3EE", "stroke-width":4 }, g);
+  el("rect", { x:448, y:160, width:14, height:28, rx:4, fill:"#0B1220", stroke:"#22D3EE", "stroke-width":2 }, g);
+  parts.kap = txt(600, 120, "", "lblb mono");
+  txt(600, 100, "Conductivity", "lbl");
+  parts.conv = txt(600, 170, "", "lblb mono");
+  txt(600, 150, "Conversion", "lbl");
+  txt(200, 110, "NaOH", "lblb"); txt(200, 130, "+ ethyl acetate", "lbl");
+  txt(200, 160, "→ acetate + ethanol", "lbl");
+}
+function drawBatch(t) {
+  const b = D.batch;
+  parts.liq.setAttribute("fill", mixColor(at(b.a, t), at(b.c, t)));
+  parts.bar.setAttribute("transform", `translate(400 236) scale(${Math.cos(phase*12)} 1) translate(-400 -236)`);
+  if (b.kappa) parts.kap.textContent = at(b.kappa, t).toFixed(3) + " mS/cm";
+  parts.conv.textContent = "X = " + (1 - at(b.a, t)).toFixed(3);
+}
+
+function coilPoint(s) { const turns = 6.5; return [70 + 600*s, 130 + 62*Math.sin(2*Math.PI*turns*s)]; }
+function buildPFR() {
+  const p = D.pfr, n = 160;
+  parts.segs = [];
+  for (let i = 0; i < n; i++) {
+    const s0 = i/n, s1 = (i+1)/n, [x0, y0] = coilPoint(s0), [x1, y1] = coilPoint(s1);
+    const back = Math.cos(2*Math.PI*6.5*(s0+s1)/2) < 0;
+    parts.segs.push({ s:(s0+s1)/2, e:el("line", { x1:x0, y1:y0, x2:x1, y2:y1, stroke:"#10233B", "stroke-width":back?7:11, "stroke-linecap":"round", opacity:back?.55:1 }) });
+  }
+  parts.flows = [pipe("M 10 130 L 70 130", "#60A5FA", 6), pipe("M 670 130 L 770 130", "#2DD4BF", 6)];
+  parts.out = parts.flows[1];
+  txt(36, 112, "Feed", "lblb"); txt(730, 112, "Outlet", "lblb");
+  parts.dots = [];
+  for (let i = 0; i < 14; i++) parts.dots.push(el("circle", { r:3.2, fill:"#E6EDF7", opacity:.8 }));
+  if (p.recycle > 0) { parts.flows.push(pipe("M 720 130 L 720 236 L 40 236 L 40 130", "#F5B041", 3, "4 9")); txt(380, 256, "recycle R = " + p.recycle.toFixed(2), "lbl"); }
+  parts.probeTxt = txt(720, 160, "", "lblb mono");
+}
+function drawPFR(t) {
+  const p = D.pfr, theta = t / p.tau;
+  const width = p.Pe ? Math.sqrt(2*Math.max(theta, 1e-3)/p.Pe) : 0.004;
+  const front = s => 1 / (1 + Math.exp((s - theta) / Math.max(width, 0.004)));
+  parts.segs.forEach(sg => {
+    const k = Math.min(p.z.length - 1, Math.round(sg.s * (p.z.length - 1)));
+    const f = p.static ? 1 : front(sg.s);
+    sg.e.setAttribute("stroke", mixColor(f*p.a[k], f*p.c[k]));
+  });
+  const fo = p.static ? 1 : front(1);
+  parts.out.setAttribute("stroke", mixColor(fo*p.a[p.a.length-1], fo*p.c[p.c.length-1]));
+  parts.dots.forEach((d, i) => {
+    const s = ((phase*0.12) + i/parts.dots.length) % 1;
+    const visible = p.static || s < theta;
+    const [x, y] = coilPoint(s); d.setAttribute("cx", x); d.setAttribute("cy", y); d.setAttribute("opacity", visible ? .85 : 0);
+  });
+  parts.probeTxt.textContent = "X = " + (fo * (1 - p.a[p.a.length-1])).toFixed(3);
+}
+
+function buildRTD() {
+  const r = D.rtd;
+  parts.flows = [pipe("M 20 150 L 210 150", "#94A3B8", 6)];
+  txt(70, 132, "water", "lbl"); parts.inj = el("circle", { cx:150, cy:150, r:0, fill:"#F5B041", opacity:.9 });
+  txt(150, 112, "tracer pulse", "lbl");
+  if (r.bed) {
+    el("rect", { x:220, y:100, width:440, height:100, rx:14, fill:"#0E1830", stroke:"#3B4B66", "stroke-width":2 });
+    parts.cells = [];
+    const n = r.z.length, w = 432 / n;
+    for (let i = 0; i < n; i++) parts.cells.push(el("rect", { x:224 + i*w, y:104, width:w + 0.6, height:92, fill:"#10233B" }));
+    for (let i = 0; i < 70; i++) el("circle", { cx:232 + (i*61) % 420, cy:112 + (i*37) % 78, r:6, fill:"none", stroke:"rgba(148,163,184,.28)" });
+    parts.flows.push(pipe("M 660 150 L 780 150", "#94A3B8", 6));
+  } else {
+    el("rect", { x:300, y:40, width:220, height:200, rx:18, fill:"#0E1830", stroke:"#3B4B66", "stroke-width":2 });
+    parts.tank = el("rect", { x:305, y:66, width:210, height:168, rx:14, fill:"#10233B" });
+    parts.imp = impeller(410, 190, 30);
+    parts.flows.push(pipe("M 210 150 L 300 150", "#94A3B8", 6));
+    parts.flows.push(pipe("M 520 210 L 780 210", "#94A3B8", 6));
+  }
+  parts.out = parts.flows[parts.flows.length - 1];
+  parts.probeTxt = txt(720, 120, "", "lblb mono");
+}
+function drawRTD(t) {
+  const r = D.rtd;
+  const pulse = Math.max(0, 1 - t / (D.t[D.t.length-1] * 0.03));
+  parts.inj.setAttribute("r", 14 * pulse);
+  let outv;
+  if (r.bed) {
+    const f = at(r.frames, t);
+    f.forEach((v, i) => parts.cells[i].setAttribute("fill", tracerColor(v)));
+    outv = f[f.length - 1];
+  } else {
+    outv = at(r.c, t);
+    parts.tank.setAttribute("fill", tracerColor(outv));
+    parts.imp.blades.setAttribute("transform", `translate(410 190) scale(${Math.cos(phase*9.4)} 1) translate(-410 -190)`);
+  }
+  parts.out.setAttribute("stroke", tracerColor(outv));
+  if (r.signal) parts.probeTxt.textContent = at(r.signal, t).toFixed(1) + " " + (r.unit || "");
+}
+
+function build() {
+  svg.innerHTML = ""; parts = {};
+  const k = D.kind;
+  if (k === "cstr") buildCSTR(); else if (k === "batch") buildBatch(); else if (k === "pfr") buildPFR(); else buildRTD();
+  document.getElementById("title").textContent = D.title || "Simulation";
+  const steady = !!D.static;
+  document.getElementById("scrub").style.visibility = steady ? "hidden" : "visible";
+  document.getElementById("step").style.visibility = steady ? "hidden" : "visible";
+  document.getElementById("reset").style.visibility = steady ? "hidden" : "visible";
+  const sp = D.spark;
+  document.getElementById("sparkwrap").style.display = sp && !steady ? "block" : "none";
+  if (sp) document.getElementById("sparklab").textContent = sp.label || "";
+}
+
+function draw() {
+  if (!D) return;
+  const t = simT;
+  if (D.kind === "cstr") drawCSTR(t); else if (D.kind === "batch") drawBatch(t); else if (D.kind === "pfr") drawPFR(t); else drawRTD(t);
+  (parts.flows || []).forEach(f => f.setAttribute("stroke-dashoffset", -phase * 60));
+  document.getElementById("clock").textContent = D.static ? "steady state" : ("t = " + t.toFixed(t < 10 ? 2 : 1) + " " + (D.unit || "min"));
+  const tEnd = D.t[D.t.length - 1];
+  document.getElementById("scrub").value = Math.round(1000 * t / tEnd);
+  const reads = document.getElementById("reads");
+  reads.innerHTML = "";
+  (D.read || []).forEach(r => {
+    const v = at(r.series, t);
+    const s = document.createElement("span"); s.className = "chip";
+    s.innerHTML = "<b>" + r.label + "</b>" + (v == null || isNaN(v) ? "–" : v.toFixed(r.digits == null ? 3 : r.digits)) + (r.unit ? " " + r.unit : "");
+    reads.appendChild(s);
+  });
+  spark(t);
+  document.getElementById("play").innerHTML = playing ? "&#10074;&#10074;" : "&#9654;";
+}
+
+function spark(t) {
+  const sp = D.spark; if (!sp || D.static) return;
+  const cv = document.getElementById("spark"), ctx = cv.getContext("2d");
+  const W = cv.clientWidth, H = cv.clientHeight, dpr = window.devicePixelRatio || 1;
+  cv.width = W * dpr; cv.height = H * dpr; ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+  const ys = sp.y.filter(v => v != null && !isNaN(v)); if (!ys.length) return;
+  let lo = Math.min(...ys), hi = Math.max(...ys); if (sp.ref != null) { lo = Math.min(lo, sp.ref); hi = Math.max(hi, sp.ref); }
+  if (hi - lo < 1e-12) { hi += 1; lo -= 1; }
+  const tEnd = D.t[D.t.length - 1];
+  const X = v => 4 + (W - 8) * v / tEnd, Y = v => H - 6 - (H - 12) * (v - lo) / (hi - lo);
+  if (sp.ref != null) { ctx.strokeStyle = "rgba(148,163,184,.6)"; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(4, Y(sp.ref)); ctx.lineTo(W - 4, Y(sp.ref)); ctx.stroke(); ctx.setLineDash([]); }
+  ctx.strokeStyle = "rgba(34,211,238,.35)"; ctx.lineWidth = 2; ctx.beginPath();
+  D.t.forEach((tt, i) => { const y = sp.y[i]; if (i === 0) ctx.moveTo(X(tt), Y(y)); else ctx.lineTo(X(tt), Y(y)); }); ctx.stroke();
+  ctx.strokeStyle = "#22D3EE"; ctx.lineWidth = 2.4; ctx.beginPath();
+  let started = false;
+  D.t.forEach((tt, i) => { if (tt > t) return; const y = sp.y[i]; if (!started) { ctx.moveTo(X(tt), Y(y)); started = true; } else ctx.lineTo(X(tt), Y(y)); });
+  const yv = at(sp.y, t); if (started) ctx.lineTo(X(t), Y(yv)); ctx.stroke();
+  ctx.fillStyle = "#22D3EE"; ctx.beginPath(); ctx.arc(X(t), Y(yv), 4, 0, 7); ctx.fill();
+}
+
+function loop(ts) {
+  if (last == null) last = ts;
+  const dt = Math.min(0.1, (ts - last) / 1000); last = ts;
+  phase += dt;
+  if (D && playing && !D.static) {
+    const tEnd = D.t[D.t.length - 1];
+    simT += dt * speed * tEnd / (D.duration || 12);
+    if (simT >= tEnd) { simT = tEnd; playing = false; }
+  }
+  draw();
+  requestAnimationFrame(loop);
+}
+
+document.getElementById("play").onclick = () => { if (!D) return; const tEnd = D.t[D.t.length-1]; if (simT >= tEnd) simT = 0; playing = !playing; };
+document.getElementById("reset").onclick = () => { simT = 0; playing = false; };
+document.getElementById("step").onclick = () => { if (!D) return; playing = false; const [i] = idx(simT); simT = D.t[Math.min(D.t.length - 1, i + 1)]; };
+document.getElementById("speed").onchange = e => { speed = parseFloat(e.target.value); };
+document.getElementById("scrub").oninput = e => { if (!D) return; playing = false; simT = D.t[D.t.length-1] * e.target.value / 1000; };
+
+window.addEventListener("message", ev => {
+  if (!ev.data || ev.data.type !== "streamlit:render") return;
+  const d = ev.data.args.data;
+  if (!d) return;
+  if (d.sig !== sig) {
+    sig = d.sig; D = d; simT = 0; playing = !d.static && d.autoplay !== false; build();
+  }
+  height();
+});
+post("streamlit:componentReady", { apiVersion: 1 });
+requestAnimationFrame(loop);
+setTimeout(height, 50);
+</script>
+</body>
+</html>
