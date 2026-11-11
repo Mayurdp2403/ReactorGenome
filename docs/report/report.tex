@@ -63,41 +63,15 @@ The proposal set out to build one web app, used on a laptop next to the rig with
 manual readings into proper fits, live plots, assumption checks and what-if studies.
 
 %=====================================================================
-\section{What we built}
+\section{What I built}
 
-ReactorGenome is a Python web app (Streamlit front end, NumPy/SciPy engine) with one page per experiment and a Design
-Studio for reactor networks. Every experiment page has the same layout: assumptions on the left, an animated reactor in
-the middle, results on the right, the readings table below, then the analysis tabs.
+\subsection{Testing}
 
-\subsection{How each part was tested}
-
-Before building the screens, every model was checked against closed-form results (ideal CSTR and PFR, tanks in series
-approaching plug flow, RTD moments, recycle flowsheets). The pages were then checked on the readings from the 2026
-CHE331 lab reports, analysed with each report's own conventions. Those readings are used only for checking: the app
-itself starts with empty tables.
-
-\begin{table}[H]
-\centering\small
-\caption{Lab-report data used to check each page.}\label{tab:data}
-\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}p{5.4cm}L@{}}
-\toprule
-Page & Data used & What was checked \\
-\midrule
-CSTR & $V = 2.15$\,L, $C_{A0} = 0.05$\,mol/L; three $T$, three flows &
-$X$, $k$ at each $T$, $E_a = 25.07$\,kJ/mol and $A$ match to four figures \\
-PFR & $V = 0.55$\,L, $C_{A0} = 0.035$\,mol/L; three $T$, three flows &
-$k$ at each $T$ and $E_a = 12.70$\,kJ/mol match the report \\
-Batch & Group 21, 50.2\,\textdegree C conductivity trace &
-Integral and differential fits; order $\approx 1$ by the differential method \\
-RTD & Stirred tank and packed bed at 10 and 15\,LPH &
-$t_m$, $\sigma^2$, $N$ and $Pe$ match the report exactly \\
-Design Studio & Analytic network (CSTR then PFR) &
-Overall $X$ matches the sequential solution; mass balance $< 10^{-8}$ \\
-\bottomrule
-\end{tabularx}
-\end{table}
-
-The screenshots below are that same checked session.
+I have tested the app myself on a range of analytic checks, lab-report readings and page renders. The test suite and
+the validation record are on GitHub:
+\url{https://github.com/Mayurdp2403/ReactorGenome/tree/main/tests}
+and
+\url{https://github.com/Mayurdp2403/ReactorGenome/blob/main/docs/VALIDATION.md}.
 
 \subsection{CSTR}
 
@@ -215,10 +189,8 @@ tables, every plot and every setting used.
 
 The whole session also saves as one \texttt{.reactorgenome.json} project file (Project $\rightarrow$ Save). That file holds
 every readings table, every setting and the Design Studio board. Another student who saved their design can hand you
-that JSON; open it with Project $\rightarrow$ Load project, or start the app as
-\nolinkurl{python -m streamlit run app.py -- their.reactorgenome.json}.
-The Design Studio comes back exactly as they left it---blocks, pipes, volumes and kinetics---so groups can share plants
-without rebuilding them.
+that JSON; open it with Project $\rightarrow$ Load project. The Design Studio comes back exactly as they left it---blocks,
+pipes, volumes and kinetics---so groups can share plants without rebuilding them.
 
 \shot{export}{Export tab: ZIP report, HTML-only option, and the sections included.}
 
