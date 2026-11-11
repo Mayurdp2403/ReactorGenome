@@ -5,7 +5,6 @@
 \usepackage{tgpagella}
 \usepackage[scale=0.92]{tgheros}
 \usepackage{amsmath}
-\usepackage{amssymb}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{tabularx}
@@ -41,8 +40,6 @@
   \includegraphics[width=#1]{figures/#2}
   \caption{#3}\label{fig:#2}
   \end{figure}}
-\newcommand{\chk}{\textcolor{ok}{\checkmark}}
-
 \pagestyle{fancy}
 \fancyhf{}
 \fancyhead[L]{\small\sffamily ReactorGenome}
@@ -211,27 +208,18 @@ mass-balance error below $10^{-8}$.
 \shot{design_studio}{Design Studio: CSTR then PFR. Overall $X = 0.545$, stream table and unit table.}
 
 \FloatBarrier
-\subsection{Export}
+\subsection{Export and sharing a session}
 
 Every experiment page and the Design Studio export a ZIP: an offline HTML report with the interactive graphs, CSV
-tables, every plot and every setting used. The whole session also saves as one project file and loads back.
+tables, every plot and every setting used.
+
+The whole session also saves as one \texttt{.reactorgenome.json} project file (Project $\rightarrow$ Save). That file holds
+every readings table, every setting and the Design Studio board. Another student who saved their design can hand you
+that JSON; open it with Project $\rightarrow$ Load project, or start the app as
+\nolinkurl{python -m streamlit run app.py -- their.reactorgenome.json}.
+The Design Studio comes back exactly as they left it---blocks, pipes, volumes and kinetics---so groups can share plants
+without rebuilding them.
 
 \shot{export}{Export tab: ZIP report, HTML-only option, and the sections included.}
-
-%=====================================================================
-\section{What we delivered}
-
-\begin{itemize}[label=\chk]
-  \item Batch, CSTR, PFR and RTD pages with lab-sheet readings tables and live fits
-  \item Steady-state extrapolation for CSTR readings, with a steady / not-steady verdict when times are typed
-  \item Conductivity to conversion from ion conductivities (typed $\Lambda_\infty$ also available)
-  \item 95\% intervals on $k$, $E_a$ and $A$; parity and residual plots
-  \item Assumption switches, with an Assumption-effects comparison on each page
-  \item Predictions from the fitted kinetics at any $T$, $C_{A0}$ and $\tau$; reaction order as a setting
-  \item Energy balance with multiple steady states, runaway and phase portraits
-  \item Design Studio: drag-and-connect plants (series, recycle, bypass, several feeds, jackets)
-  \item Levenspiel plots, plant profiles, parameter sweeps, and $k(T)$ shared across pages
-  \item One-click ZIP / HTML export and project save / load
-\end{itemize}
 
 \end{document}
