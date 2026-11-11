@@ -5,11 +5,12 @@
 \usepackage{tgpagella}
 \usepackage[scale=0.92]{tgheros}
 \usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{tabularx}
-\usepackage{xltabular}
 \usepackage{array}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
 \usepackage{float}
 \usepackage[section]{placeins}
 \renewcommand{\topfraction}{0.9}
@@ -25,26 +26,22 @@
 
 \definecolor{accent}{HTML}{0E7490}
 \definecolor{ok}{HTML}{15803D}
-\definecolor{part}{HTML}{B45309}
-\definecolor{plus}{HTML}{1D4ED8}
 
 \titleformat{\section}{\Large\sffamily\bfseries\color{accent}}{\thesection}{0.8em}{}
 \titleformat{\subsection}{\large\sffamily\bfseries}{\thesubsection}{0.7em}{}
-\titlespacing*{\section}{0pt}{18pt}{8pt}
-\titlespacing*{\subsection}{0pt}{12pt}{5pt}
+\titlespacing*{\section}{0pt}{16pt}{6pt}
+\titlespacing*{\subsection}{0pt}{10pt}{4pt}
 
-\setlist{itemsep=2pt,topsep=4pt}
-\setlength{\parskip}{4pt}
-\renewcommand{\arraystretch}{1.25}
-\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\setlist{itemsep=2pt,topsep=3pt}
+\setlength{\parskip}{3pt}
+\renewcommand{\arraystretch}{1.2}
 
-\newcommand{\done}{\textcolor{ok}{\textbf{Delivered}}}
-\newcommand{\partly}{\textcolor{part}{\textbf{Partly}}}
 \newcommand{\shot}[3][\textwidth]{%
   \begin{figure}[!htbp]\centering
   \includegraphics[width=#1]{figures/#2}
   \caption{#3}\label{fig:#2}
   \end{figure}}
+\newcommand{\chk}{\textcolor{ok}{\checkmark}}
 
 \pagestyle{fancy}
 \fancyhf{}
@@ -54,41 +51,6 @@
 \renewcommand{\headrulewidth}{0.4pt}
 
 \begin{document}
-
-\pagenumbering{roman}
-\hypersetup{pageanchor=false}
-\begin{titlepage}
-  \centering
-  \vspace*{3cm}
-  {\sffamily\bfseries\fontsize{34}{40}\selectfont\color{accent} ReactorGenome\par}
-  \vspace{0.4cm}
-  {\Large\sffamily One Digital Twin for the Batch, CSTR, PFR and RTD Labs\par}
-  \vspace{1.2cm}
-  {\large CHE331 Innovation Project: Final Report\par}
-  \vspace{2.5cm}
-  {\large Mayur Dilip Pachpute\par}
-  {Roll No. 240643\par}
-  \vspace{0.6cm}
-  {November 2026\par}
-  \vfill
-  \begin{minipage}{0.85\textwidth}
-  \small
-  \textbf{Summary.} ReactorGenome is a web application that sits beside the CHE331 reactor rigs. Students type the readings
-  they already take; the app fits them to the reactor equations, shows what each textbook assumption costs, and lets the
-  fitted kinetics drive reactor networks that cannot be built in the lab. All five parts of the proposal were built. Three
-  points are only partly met and are listed openly in Section~\ref{sec:promised}. On the 2026 lab reports the app
-  reproduces every reported rate constant and activation energy to four significant figures, and 134 automated tests
-  check the engine, the pages and the exports.
-  \end{minipage}
-  \vspace{1.5cm}
-
-  {\small Source code: \url{https://github.com/Mayurdp2403/ReactorGenome}\par}
-\end{titlepage}
-\hypersetup{pageanchor=true}
-
-\tableofcontents
-\newpage
-\pagenumbering{arabic}
 
 %=====================================================================
 \section{The problem}
@@ -104,304 +66,172 @@ The proposal set out to build one web app, used on a laptop next to the rig with
 manual readings into proper fits, live plots, assumption checks and what-if studies.
 
 %=====================================================================
-\section{What was built}
+\section{What we built}
 
-ReactorGenome is a Python application (Streamlit front end, NumPy/SciPy engine) with one page per experiment and a
-Design Studio for reactor networks. It runs on a laptop with \texttt{run.bat}, and other laptops on the same network can
-open the same address.
+ReactorGenome is a Python web app (Streamlit front end, NumPy/SciPy engine) with one page per experiment and a Design
+Studio for reactor networks. Every experiment page has the same layout: assumptions on the left, an animated reactor in
+the middle, results on the right, the readings table below, then the analysis tabs.
 
-Every experiment page follows the same layout (Figure~\ref{fig:cstr_overview}): assumptions on the left, an animated
-reactor in the middle, results and diagnostics on the right, the readings table below, then the analysis tabs. Every
-control has a short help text.
+\subsection{How each part was tested}
 
-\shot{cstr_overview}{CSTR page. Left: assumption switches and run conditions. Middle: animated tank with the simulated
-start-up. Right: results, diagnostics and the kinetics fitted from the readings typed below (Ea~=~25.07~kJ/mol).}
+Before building the screens, every model was checked against closed-form results (ideal CSTR and PFR, tanks in series
+approaching plug flow, RTD moments, recycle flowsheets). The pages were then checked on the readings from the 2026
+CHE331 lab reports, analysed with each report's own conventions. Those readings are used only for checking: the app
+itself starts with empty tables.
 
-The code has two layers:
-\begin{itemize}
-  \item \textbf{Engine} (\texttt{reactorgenome/engine}): the models and solvers, with no user-interface code. It covers
-  units and bounds, rate laws, the stirred tank (steady, transient, non-ideal mixing and energy balance), batch fitting,
-  plug flow with dispersion and laminar flow, RTD moments and model fits, the lab-sheet analysis and a flowsheet
-  solver.
-  \item \textbf{Interface} (\texttt{reactorgenome/ui}): one module per page, plus shared widgets, charts, cached engine
-  calls and exports. The animation player and the drag-and-drop design board are small HTML/JavaScript components.
-\end{itemize}
-
-%=====================================================================
-\section{Proposal against delivery}\label{sec:promised}
-
-Table~\ref{tab:promised} takes each promise in the proposal in turn. ``Partly'' means the feature exists but does not
-yet do everything the proposal describes.
-
-{\small
-\begin{xltabular}{\textwidth}{@{}>{\raggedright\arraybackslash}p{4.4cm} L >{\raggedright\arraybackslash}p{1.6cm}@{}}
-\caption{What the proposal promised and what was delivered.}\label{tab:promised}\\
+\begin{table}[H]
+\centering\small
+\caption{Lab-report data used to check each page.}\label{tab:data}
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}p{5.4cm}L@{}}
 \toprule
-\textbf{Proposal} & \textbf{Delivered} & \textbf{Status} \\
+Page & Data used & What was checked \\
 \midrule
-\endfirsthead
-\toprule
-\textbf{Proposal} & \textbf{Delivered} & \textbf{Status} \\
-\midrule
-\endhead
+CSTR & $V = 2.15$\,L, $C_{A0} = 0.05$\,mol/L; three $T$, three flows &
+$X$, $k$ at each $T$, $E_a = 25.07$\,kJ/mol and $A$ match to four figures \\
+PFR & $V = 0.55$\,L, $C_{A0} = 0.035$\,mol/L; three $T$, three flows &
+$k$ at each $T$ and $E_a = 12.70$\,kJ/mol match the report \\
+Batch & Group 21, 50.2\,\textdegree C conductivity trace &
+Integral and differential fits; order $\approx 1$ by the differential method \\
+RTD & Stirred tank and packed bed at 10 and 15\,LPH &
+$t_m$, $\sigma^2$, $N$ and $Pe$ match the report exactly \\
+Design Studio & Analytic network (CSTR then PFR) &
+Overall $X$ matches the sequential solution; mass balance $< 10^{-8}$ \\
 \bottomrule
-\endlastfoot
-\multicolumn{3}{@{}l}{\textit{1. Enter the readings}}\\
-Pick the rig and type readings at the times a stopwatch gives &
-Batch, CSTR, PFR and RTD pages. The readings tables follow the lab sheets and accept CSV import. A stopwatch on
-the CSTR page gives the reading schedule (2--5 settling times). & \done \\
-\midrule
-\multicolumn{3}{@{}l}{\textit{2. Fit the data properly}}\\
-Treat CSTR readings as a transient and extrapolate to the true steady state &
-Plateau from the simulated start-up shape, a single exponential, or the manual average. When reading times are typed,
-each run gets a steady or not-steady verdict. & \done \\
-Conductivity to conversion from ion concentrations, not a fixed $\Lambda_\infty$ &
-Default $\Lambda_\infty = 0.366\,\Lambda_0$ from limiting ionic conductivities. A typed value is also accepted, and
-$\Lambda_\infty$ can be estimated from the readings with a 95\% interval. & \done \\
-Fit dead volume, bypass and mixing zones &
-The bypass fraction is fitted from the readings. Dead volume, stagnant zones and tanks in series are set by the user and
-compared against the readings. The RTD page measures $N$ and $Pe$ directly. & \partly \\
-An error bar on every number &
-95\% intervals on $k$, $E_a$ and $A$, error bars on measured conversions, and parity and residual plots. & \done \\
-\midrule
-\multicolumn{3}{@{}l}{\textit{3. Watch it live}}\\
-Design plot, Arrhenius plot and transient redraw on each reading &
-All plots and the fitted kinetics update as each cell is typed. & \done \\
-Show the expected reading first, then judge ideal or not &
-The app shows the outlet conductivity and conversion it expects for the current settings. Diagnostics after the fit
-explain non-ideal behaviour. There is no step-by-step prediction before each individual reading. & \partly \\
-\midrule
-\multicolumn{3}{@{}l}{\textit{4. Change the assumptions}}\\
-Switches for equimolar feed, irreversibility, ideal mixing, isothermal operation and steady state after one $\tau$ &
-Each assumption is a switch on its page. The \emph{Assumption effects} tab shows the conversion with each one
-dropped on its own (Figure~\ref{fig:cstr_assumptions}). & \done \\
-\midrule
-\multicolumn{3}{@{}l}{\textit{5. Try what the lab cannot do}}\\
-Reactors in series in either order, unequal sizes, recycle, non-equimolar feeds, packed bed as a reactor &
-Design Studio: a drag-and-connect board solved as one network, with presets and a mass-balance check. & \done \\
-Non-isothermal scale-up with runaway and multiple steady states; Levenspiel plots and phase portraits &
-Energy-balance tab with the heat-generation and heat-removal curves, stability of each steady state and phase
-portraits. Levenspiel plots are on the PFR page and in the Design Studio. & \done \\
-Batch $k$ improves the CSTR and PFR predictions in the same session &
-Fitted second-order kinetics are published to every page and to the Design Studio. & \done \\
-All four experiments on one conversion--$Da$ plot &
-The CSTR page plots its measured runs on the $X$--$Da$ curve. The Design Studio overlays $k(T)$ from every rig and
-shows the ideal $Da$ curves, but without the measured points from each rig. & \partly \\
-\midrule
-\multicolumn{3}{@{}l}{\textit{Deliverables}}\\
-Four-tab app usable on a laptop or phone within the lab slot &
-Four experiment pages plus the Design Studio; runs locally and over the lab network. Laptop use was tested; phone
-layout was not. & \done \\
-One-click export of the observation table, results, graphs and a diagnosis &
-Each page exports a ZIP: an offline HTML report, CSV tables, every plot and every setting. The whole session saves as
-a project file. & \done \\
-\end{xltabular}}
+\end{tabularx}
+\end{table}
 
-%=====================================================================
-\section{The application, page by page}
+The screenshots below are that same checked session.
 
-The screenshots below are the app running on the readings from the 2026 CHE331 lab reports. Those readings were
-used only to check the mathematics. They are not built into the app, which starts with empty tables.
-
-\FloatBarrier
 \subsection{CSTR}
 
-Readings are typed exactly as on the lab sheet (Figure~\ref{fig:cstr_readings}): one row per run with temperature,
-total flow, $\tau$ and up to four outlet conductivities, plus a small table of $\Lambda_0$ for each temperature.
+Assumptions (equimolar feed, ideal mixing, isothermal, irreversible) sit as switches on the left. Readings are typed
+exactly as on the lab sheet: one row per run, plus a small $\Lambda_0$ table per temperature
+(Figure~\ref{fig:cstr_readings}).
 
-\shot{cstr_readings}{Readings table, laid out like the lab sheet's observation table.}
+\shot{cstr_overview}{CSTR page: assumption switches, animated start-up, results, and fitted kinetics
+($E_a = 25.07$\,kJ/mol).}
 
-The \emph{Results} tab (Figure~\ref{fig:cstr_results}) collects everything the lab report needs on one screen:
-$E_a$, $A$ and $k$ at each temperature with 95\% intervals, the design plot for each temperature and for all of them
-together, the Arrhenius plot, conversion against flow and temperature, single-run $k$ against $\tau$, a parity plot
-and residuals. The rate law used for the fit (order 1 to 3) is a setting.
+\shot{cstr_readings}{Readings table, laid out like the lab sheet.}
 
-\shot[0.86\textwidth]{cstr_results}{Results tab: kinetics with intervals and all of the report's plots on one screen.}
+The Results tab puts everything the lab report needs on one screen: $E_a$, $A$, $k$ at each temperature with 95\%
+intervals, design plots, Arrhenius, conversion against flow and temperature, single-run $k$ against $\tau$, parity and
+residuals (Figure~\ref{fig:cstr_results}). The rate-law order (1 to 3) is a setting.
 
-Below the plots, the fitted $k(T)$ predicts the conversion at any temperature, feed concentration and $\tau$
-(Figure~\ref{fig:cstr_predictions}). The right-hand plot shows why one concentration cannot pin down the reaction
-order: every order fits the runs at the $C_{A0}$ that was used, and the orders separate only away from it.
+\shot[0.86\textwidth]{cstr_results}{Results tab: kinetics and all of the report plots on one screen.}
 
-\shot{cstr_predictions}{What the fitted kinetics predict: $X$ against $\tau$, $k$ against $T$, and $X$ against $C_{A0}$
-for orders 1 to 3.}
+The fitted $k(T)$ then predicts $X$ at any temperature, feed concentration and $\tau$. The right-hand plot shows why one
+concentration cannot pin down the order: every order fits the runs at the $C_{A0}$ used, and the orders separate only
+away from it (Figure~\ref{fig:cstr_predictions}).
+
+\shot{cstr_predictions}{Predictions: $X$ against $\tau$, $k$ against $T$, and $X$ against $C_{A0}$ for orders 1 to 3.}
 
 \shot{cstr_assumptions}{Assumption effects: conversion with each textbook assumption dropped on its own.}
 
-The energy balance turns the tank into the scale-up case from the proposal. With a concentrated feed and a weak jacket
-(Figure~\ref{fig:cstr_energy}) the heat-generation curve crosses the heat-removal line three times. The steady states at
-31\,\textdegree C and 134\,\textdegree C are stable; the one at 80\,\textdegree C is not. The phase portrait shows which
-start-up conditions run away to the hot state.
+The energy-balance tab is the scale-up case from the proposal. With a concentrated feed and a weak jacket
+(Figure~\ref{fig:cstr_energy}) the heat-generation curve crosses the heat-removal line three times: stable states at
+31\,\textdegree C and 134\,\textdegree C, an unstable one at 80\,\textdegree C. The phase portrait shows which start-ups
+run away.
 
-\shot{cstr_energy}{Energy balance for a 5~mol/L feed with a weak jacket ($UA = 40$~J/min/K, $E_a = 90$~kJ/mol,
-$\Delta H = -100$~kJ/mol): three steady states and the phase portrait.}
+\shot{cstr_energy}{Energy balance: three steady states and the phase portrait
+($UA = 40$\,J/min/K, $E_a = 90$\,kJ/mol, $\Delta H = -100$\,kJ/mol).}
 
 \FloatBarrier
 \subsection{PFR}
 
-The PFR page treats the helical coil as a plug-flow reactor and lets the user switch on axial dispersion, laminar flow,
-recycle, an adiabatic temperature rise and reaction that continues in the sample beaker. Coil Reynolds and Dean numbers
-are worked out from the coil geometry.
+The helical coil is treated as plug flow by default. Axial dispersion, laminar flow, recycle, adiabatic temperature rise
+and reaction that continues in the sample beaker are switches. Coil Reynolds and Dean numbers come from the coil
+geometry.
 
-\shot{pfr_overview}{PFR page with the kinetics fitted from the readings ($E_a = 12.70$~kJ/mol, as in the lab report).}
+\shot{pfr_overview}{PFR page with fitted kinetics ($E_a = 12.70$\,kJ/mol, as in the lab report).}
 
-\shot[0.86\textwidth]{pfr_results}{PFR results: design plots, Arrhenius plot, conversion against flow and temperature,
-single-run $k$, parity and residuals.}
+\shot[0.86\textwidth]{pfr_results}{PFR results: design plots, Arrhenius, conversion against flow and temperature,
+parity and residuals.}
 
 \shot{pfr_flow_models}{The same $k$ under each flow picture, with the measured points at 50\,\textdegree C.}
 
 \FloatBarrier
 \subsection{Batch}
 
-The batch page fits conductivity against time. The rate law is a choice, not an assumption: first order, second order,
-reversible and a fitted power law are compared by AIC, with a clock offset for the seconds between mixing and starting
-the stopwatch.
+Conductivity against time is fitted with a choice of rate law (first, second, reversible, or a fitted power). The laws
+are ranked by AIC. A clock offset covers the seconds between mixing and starting the stopwatch.
 
-\shot{batch_overview}{Batch page at 50.2\,\textdegree C: fitted $k = 102.9$~L/mol/min with its interval.}
+\shot{batch_overview}{Batch page at 50.2\,\textdegree C: fitted $k = 102.9$\,L/mol/min with its interval.}
 
-\shot{batch_fit}{Batch fit: integral and differential plots, residuals, and the rate laws ranked by AIC. The
-differential method gives $n \approx 1.0$, the same as the lab report.}
+\shot{batch_fit}{Integral and differential plots, residuals, and rate laws ranked by AIC
+($n \approx 1.0$ by the differential method).}
 
 \FloatBarrier
 \subsection{RTD}
 
-Up to four tracer runs share one time column. For each run the page gives the mean time, the variance, $N$ (both the
-exact value and the nearest whole number), the Peclet number under three conventions, and fitted tanks-in-series and
-dispersion models. It also warns when the curve was cut off before the tracer had left.
+Up to four tracer runs share one time column. For each run the page gives $t_m$, $\sigma^2$, $N$ (exact and nearest
+whole number), $Pe$ under three conventions, and fitted tanks-in-series and dispersion models. It warns when the curve
+was cut off before the tracer had left.
 
-\shot{rtd_overview}{RTD page, stirred tank at 15~LPH. The diagnostic explains that $N = 1.5$ comes mostly from the cut-off tail.}
+\shot{rtd_overview}{RTD page, stirred tank at 15\,LPH. The diagnostic shows that $N = 1.5$ comes mostly from the cut-off
+tail.}
 
-\shot{rtd_all_runs}{All four runs: tracer curves, $E(t)$ for each vessel, $E(\theta)$ and $F(t)$.}
+\shot{rtd_all_runs}{All four runs: tracer curves, $E(t)$, $E(\theta)$ and $F(t)$.}
 
-\shot{rtd_model_fits}{Model fits ranked by error, with the residuals of the best model.}
+\shot{rtd_model_fits}{Model fits ranked by error, with residuals of the best model.}
 
 \FloatBarrier
 \subsection{Design Studio}
 
-Blocks (feeds, CSTRs, PFRs, packed beds, splitters, products) are dragged onto a board, connected and solved as one
-network. Recycle loops converge by Wegstein acceleration, and the mass balance closes to better than $10^{-8}$. The
-same kinetics can come from any lab page.
+The Design Studio is the ``what the lab cannot do'' part of the proposal: build a plant from blocks and solve it as one
+network, using the same rate law that was fitted on a lab page.
 
-\shot{design_studio}{Design Studio with a CSTR followed by a PFR: overall conversion 0.545, stream table and unit table.}
+Blocks available on the board are Feed, CSTR, PFR, packed bed, Splitter and Product. They are dragged onto the canvas,
+connected by pipes, and solved together. Several feeds can enter the same tank; a splitter can send a fraction of its
+outlet back as recycle or around a unit as bypass. Presets load common layouts in one click: CSTR then PFR, PFR with
+recycle, bypassed CSTR, two feeds into a tank and a bed, and a jacketed tank with a strong exotherm.
+
+Kinetics come from any lab page that has published a fit, or can be typed. Recycle loops are iterated with Wegstein
+acceleration until compositions change by less than $10^{-10}$\,mol/L. The mass balance on sodium and acetyl groups is
+reported and closes to better than $10^{-8}$. Each block shows its own conversion, residence time and temperature on the
+board; the right panel shows overall conversion, product flow, total reactor volume and the number of passes needed to
+converge (one or two means there is no recycle).
+
+Below the board, six tabs open the plant up:
+\begin{itemize}
+  \item \textbf{Streams} --- every pipe and every unit as a table (flows, compositions, temperatures, jacket duty).
+  \item \textbf{Profiles} --- NaOH and temperature along the main path against cumulative reactor volume. A stirred tank
+  drops straight to its outlet; a tube or bed falls gradually.
+  \item \textbf{Levenspiel} --- $1/(-r_A)$ against $X$ along the path, so the area for each unit is its $\tau \cdot C_{A,\mathrm{in}}$.
+  \item \textbf{Sweep} --- overall conversion against one chosen parameter of one chosen block (volume, flow, splitter
+  fraction, temperature).
+  \item \textbf{Compare rigs} --- $k(T)$ from every lab page that has published a fit, overlaid on one Arrhenius plot, plus
+  the ideal $X$--$Da$ curves for a stirred tank and for plug flow.
+  \item \textbf{Export} --- the same ZIP report as on the experiment pages.
+\end{itemize}
+
+Figure~\ref{fig:design_studio} shows the CSTR-then-PFR preset: feed at 0.4\,L/min into a 2\,L tank ($X = 0.451$ per pass),
+then a 0.5\,L tube ($X = 0.171$ per pass). Overall conversion is 0.545, matching the sequential analytic solution, with
+mass-balance error below $10^{-8}$.
+
+\shot{design_studio}{Design Studio: CSTR then PFR. Overall $X = 0.545$, stream table and unit table.}
 
 \FloatBarrier
 \subsection{Export}
 
-\shot{export}{Export tab: one ZIP with an offline HTML report, CSV tables, every plot and every setting used.}
+Every experiment page and the Design Studio export a ZIP: an offline HTML report with the interactive graphs, CSV
+tables, every plot and every setting used. The whole session also saves as one project file and loads back.
+
+\shot{export}{Export tab: ZIP report, HTML-only option, and the sections included.}
 
 %=====================================================================
-\section{Validation}
+\section{What we delivered}
 
-The engine was checked in two ways: against closed-form results, and against the numbers in the 2026 lab reports
-analysed with each report's own conventions. The full record, which a script regenerates from fresh calculations, is
-in \nolinkurl{docs/VALIDATION.md}.
-
-\begin{table}[H]
-\centering\small
-\caption{Engine against closed-form results (selected).}\label{tab:analytic}
-\begin{tabular}{@{}lccc@{}}
-\toprule
-Case & Engine & Exact & Error \\
-\midrule
-Ideal CSTR, $Da = 1$ & 0.3820 & 0.3820 & $1\times10^{-16}$ \\
-Ideal CSTR, $Da = 1$, $M = 2$ & 0.5858 & 0.5858 & $4\times10^{-14}$ \\
-Plug flow, $X = Da/(1+Da)$ & 0.2308 & 0.2308 & $8\times10^{-12}$ \\
-Dispersion, $Pe = 1000$ (plug-flow limit) & 0.2307 & 0.2308 & $9\times10^{-5}$ \\
-Transient CSTR settles on the algebraic steady state & 0.4637 & 0.4637 & $5\times10^{-14}$ \\
-Flowsheet CSTR $\rightarrow$ PFR against sequential solution & 0.5450 & 0.5450 & $5\times10^{-10}$ \\
-RTD of 3 tanks: $N$ from moments & 3.000 & 3 & -- \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{table}[H]
-\centering\small
-\caption{App against the 2026 lab reports, using each report's own conventions.}\label{tab:reports}
-\begin{tabularx}{\textwidth}{@{}lLcc@{}}
-\toprule
-Experiment & Quantity & Report & App \\
-\midrule
-CSTR & $k$ at 31 / 46 / 60\,\textdegree C (L/mol/min) & 3.1629 / 5.8541 / 7.4362 & 3.1629 / 5.8541 / 7.4362 \\
-     & $E_a$ (kJ/mol), $A$ (L/mol/min) & 25.07, $6.71\times10^4$ & 25.07, $6.71\times10^4$ \\
-PFR  & $k$ at 40 / 50 / 60\,\textdegree C (L/mol/min) & 11.738 / 13.749 / 15.730 & 11.738 / 13.749 / 15.730 \\
-     & $E_a$ (kJ/mol) & 12.70 & 12.70 \\
-RTD  & CSTR 15 LPH: $t_m$ (min), $\sigma^2$ (min$^2$), $N$ & 8.244, 45.276, 1.501 & 8.244, 45.276, 1.501 \\
-     & Packed bed 15 LPH: $Pe$, $\tau$ (min) & 35.93, 4.896 & 35.93, 4.896 \\
-Batch & Reaction order (differential method) & 0.987 & 1.01 \\
-\bottomrule
-\end{tabularx}
-\end{table}
-
-The app reproduces every reported value. Applying the app's own methods to the same readings showed things the
-reports could not:
-\begin{itemize}
-  \item \textbf{$\Lambda_\infty$ is the largest source of error.} Fitting one $\Lambda_\infty$ to all nine CSTR runs gives
-  $\Lambda_\infty \approx 0.30\,\Lambda_0$, close to the ion estimate of $0.366\,\Lambda_0$ and far from the
-  0.1~mS/cm used in the report. With it, $k$ at 31\,\textdegree C is about 8.5~L/mol/min rather than 3.16, and the
-  single-run $k$ no longer drifts with $\tau$.
-  \item \textbf{CSTR steady state.} Extrapolating each run to its plateau removes most of the
-  ``28\,\textdegree C beats 40\,\textdegree C'' inversion described in the proposal. The inversion came from averaging
-  readings taken before the tank had settled, not from the kinetics.
-  \item \textbf{RTD tail.} The stirred-tank curves stop at 4\% of the peak. Adding the missing tail brings $N$ from 1.5 to
-  about 1.2, close to one ideal tank.
-  \item \textbf{Batch order.} After the mixing period the batch trace fits first order better than second order, which
-  agrees with the report's own differential method.
+\begin{itemize}[label=\chk]
+  \item Batch, CSTR, PFR and RTD pages with lab-sheet readings tables and live fits
+  \item Steady-state extrapolation for CSTR readings, with a steady / not-steady verdict when times are typed
+  \item Conductivity to conversion from ion conductivities (typed $\Lambda_\infty$ also available)
+  \item 95\% intervals on $k$, $E_a$ and $A$; parity and residual plots
+  \item Assumption switches, with an Assumption-effects comparison on each page
+  \item Predictions from the fitted kinetics at any $T$, $C_{A0}$ and $\tau$; reaction order as a setting
+  \item Energy balance with multiple steady states, runaway and phase portraits
+  \item Design Studio: drag-and-connect plants (series, recycle, bypass, several feeds, jackets)
+  \item Levenspiel plots, plant profiles, parameter sweeps, and $k(T)$ shared across pages
+  \item One-click ZIP / HTML export and project save / load
 \end{itemize}
-
-%=====================================================================
-\section{Beyond the proposal}
-
-\begin{itemize}
-  \item \textbf{Reaction order as a setting} (1 to 3) on the CSTR and PFR pages, with a table comparing how well each
-  order fits and a plot showing where the orders separate.
-  \item \textbf{Three ways to fit $k$} (conversion function on $\tau$, $\tau$ on conversion function, a free line), each
-  with intervals, parity plots and residuals.
-  \item \textbf{Single-run $k$ against $\tau$} as a consistency check: a sloping line points to $\Lambda_\infty$, a sampling
-  delay, or runs that were not steady.
-  \item \textbf{RTD extras:} tail correction with the tail's share of the tracer, three Peclet conventions, $\tau$ from
-  $Pe$, $D_L$ from the bed geometry, and the conversion each measured vessel would give.
-  \item \textbf{Sample delay in the PFR,} modelled explicitly instead of hidden in a free intercept of 7 to 16 minutes.
-  \item \textbf{Input checks:} each page states the inputs it used and flags rows that cannot be analysed, such as a
-  missing $\Lambda_0$ or readings beyond $\Lambda_\infty$.
-  \item \textbf{Project files:} the whole session (tables, settings and the design board) saves to one file and loads back.
-\end{itemize}
-
-%=====================================================================
-\section{Testing}
-
-The test suite (\texttt{python -m pytest tests}, 134 tests) covers:
-\begin{itemize}
-  \item closed-form limits for every reactor model, unit conversions and bounds, invalid inputs and solver failures;
-  \item flowsheets with recycle, the RTD moments and model fits;
-  \item each lab report's numbers, reproduced to four significant figures;
-  \item every page rendered with and without readings, including malformed tables;
-  \item the exports, and saving and restoring a project.
-\end{itemize}
-\texttt{tools/make\_validation.py} regenerates the validation record from fresh calculations.
-
-%=====================================================================
-\section{Limitations}
-
-\begin{itemize}
-  \item The three ``Partly'' items in Table~\ref{tab:promised}: dead volume and stagnant zones are compared rather than
-  fitted, there is no prediction step before each individual reading, and the common $Da$ plot does not yet carry the
-  measured points from every rig.
-  \item The layout has not been tested on a phone.
-  \item Only second-order kinetics are shared between pages. Fits with another order stay on the page that made them.
-  \item The energy balance is checked against its isothermal limit and for multiple steady states, not against measured
-  temperatures, because the rigs are run isothermally.
-  \item The chemistry is NaOH with ethyl acetate throughout, as in the course.
-\end{itemize}
-
-%=====================================================================
-\section{Running the app}
-
-\begin{verbatim}
-git clone https://github.com/Mayurdp2403/ReactorGenome.git
-cd ReactorGenome
-python -m pip install -r requirements.txt
-python -m streamlit run app.py
-\end{verbatim}
-On Windows, \texttt{run.bat} does the same. The screenshots in this report are regenerated with
-\texttt{python docs/report/make\_figures.py}.
 
 \end{document}
