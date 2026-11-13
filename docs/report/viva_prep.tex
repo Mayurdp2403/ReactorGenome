@@ -1,11 +1,10 @@
 \documentclass[11pt,a4paper]{article}
 
-\usepackage[margin=2.1cm]{geometry}
+\usepackage[margin=2.0cm]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage{tgpagella}
 \usepackage[scale=0.92]{tgheros}
-\usepackage{amsmath}
-\usepackage{amssymb}
+\usepackage{amsmath,amssymb}
 \usepackage{booktabs}
 \usepackage{tabularx}
 \usepackage{array}
@@ -23,381 +22,384 @@
 \definecolor{warnbg}{HTML}{FFF7ED}
 \definecolor{ok}{HTML}{166534}
 \definecolor{muted}{HTML}{64748B}
+\definecolor{eqbg}{HTML}{F8FAFC}
 
 \hypersetup{colorlinks=true,linkcolor=accent,urlcolor=accent}
 
-\titleformat{\section}{\Large\sffamily\bfseries\color{accent}}{\thesection}{0.75em}{}
-\titleformat{\subsection}{\large\sffamily\bfseries\color{ink}}{\thesubsection}{0.6em}{}
-\titlespacing*{\section}{0pt}{14pt}{6pt}
-\titlespacing*{\subsection}{0pt}{10pt}{4pt}
+\titleformat{\section}{\Large\sffamily\bfseries\color{accent}}{\thesection}{0.7em}{}
+\titleformat{\subsection}{\large\sffamily\bfseries\color{ink}}{\thesubsection}{0.55em}{}
+\titlespacing*{\section}{0pt}{12pt}{5pt}
+\titlespacing*{\subsection}{0pt}{8pt}{3pt}
 
-\setlist{itemsep=2pt,topsep=3pt,leftmargin=1.2em}
-\setlength{\parskip}{3pt}
-\renewcommand{\arraystretch}{1.22}
+\setlist{itemsep=1.5pt,topsep=2pt,leftmargin=1.15em}
+\setlength{\parskip}{2.5pt}
+\renewcommand{\arraystretch}{1.18}
 \newcolumntype{L}{>{\raggedright\arraybackslash}X}
 
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[L]{\small\sffamily\color{muted} ReactorGenome · Viva prep}
-\fancyhead[R]{\small\sffamily\color{muted} CHE331}
+\fancyhead[L]{\small\sffamily\color{muted} ReactorGenome · Explain everything}
+\fancyhead[R]{\small\sffamily\color{muted} CHE331 viva}
 \fancyfoot[C]{\small\thepage}
 \renewcommand{\headrulewidth}{0.3pt}
 
-\tcbset{boxrule=0pt,sharp corners=southwest,fonttitle=\sffamily\bfseries,coltitle=white,breakable}
+\tcbset{boxrule=0pt,fonttitle=\sffamily\bfseries,coltitle=white,breakable,sharp corners=southwest}
+\newtcolorbox{pitchbox}{colback=soft,leftrule=3pt,colframe=accent,title={Pitch},colbacktitle=accent}
+\newtcolorbox{eqbox}{colback=eqbg,leftrule=3pt,colframe=accent!70,boxrule=0pt,before skip=4pt,after skip=4pt}
+\newtcolorbox{tipbox}{colback=warnbg,leftrule=3pt,colframe=orange!70,title={Say this},colbacktitle=orange!75!black}
+\newtcolorbox{qabox}[1]{colback=white,colframe=accent!35,boxrule=0.35pt,title={Q: #1},colbacktitle=accent!90!black,before skip=6pt,after skip=4pt}
 
-\newtcolorbox{pitchbox}{colback=soft,colframe=accent,boxrule=0pt,leftrule=3pt,
-  title={Thirty-second pitch --- memorise this},colbacktitle=accent}
-\newtcolorbox{qabox}[1]{colback=white,colframe=accent!40,boxrule=0.4pt,title={Q: #1},
-  colbacktitle=accent!90!black,before skip=8pt,after skip=6pt}
-\newtcolorbox{tipbox}{colback=warnbg,colframe=orange!60!black,boxrule=0pt,leftrule=3pt,
-  title={If they ask for an insight},colbacktitle=orange!75!black}
-\newtcolorbox{labbox}{colback=soft,colframe=accent,boxrule=0pt,leftrule=3pt,
-  title={3-hour lab --- one sentence},colbacktitle=accent}
-
-\newcommand{\say}[1]{\textit{``#1''}}
-\newcommand{\fig}[1]{\textsf{\small #1}}
+\newcommand{\term}[1]{\textbf{#1}}
 
 \begin{document}
 
 \begin{center}
-  {\sffamily\bfseries\fontsize{26}{30}\selectfont\color{accent} Viva \& presentation prep\par}
-  \vspace{0.25cm}
-  {\Large\sffamily ReactorGenome\par}
-  \vspace{0.15cm}
-  {\color{muted} Speak these answers --- not code.\par}
-  \vspace{0.45cm}
-  {\small
-  App: \url{https://che331.streamlit.app}
-  \quad·\quad
-  Report: \texttt{docs/report/report.pdf}
-  \quad·\quad
-  Repo: \url{https://github.com/Mayurdp2403/ReactorGenome}
-  }
+{\sffamily\bfseries\fontsize{24}{28}\selectfont\color{accent} Explain the project to your professor\par}
+\vspace{0.2cm}
+{\large\sffamily How it was made · Maths · Graphs · Terms · Books\par}
+\vspace{0.35cm}
+{\small App: \url{https://che331.streamlit.app}
+\quad·\quad
+Report: \texttt{docs/report/report.pdf}
+\quad·\quad
+Tests: \href{https://github.com/Mayurdp2403/ReactorGenome/tree/main/tests}{GitHub / tests}}
 \end{center}
-\vspace{0.4cm}
-
-%---------------------------------------------------------------------
-\section{Thirty-second pitch}
 
 \begin{pitchbox}
-CHE331 runs Batch, CSTR, PFR and RTD under fixed conditions. We write readings down and analyse later, so we never
-\emph{see} what is going wrong inside the reactor during the lab. ReactorGenome is a web app on a laptop next to the
-rig. Students type the same readings they already take. The app fits kinetics, checks whether a run really reached
-steady state, lets you switch assumptions on and off, and then uses your fitted \(k\) to design plants the lab cannot
-build --- series, recycle, jackets with multiple steady states. No new sensors. One app for all four labs.
+CHE331's four reactor labs are run under fixed conditions and analysed later. ReactorGenome is a laptop web app beside the
+rig: type the same readings, get live fits and diagnostics, switch assumptions, then use your fitted \(k\) in a Design
+Studio the lab cannot build. No new sensors.
 \end{pitchbox}
 
-%---------------------------------------------------------------------
-\section{The problem}
+%=====================================================================
+\section{How the app was made (basics --- no code deep dive)}
 
-\textbf{What the lab does today}
-\begin{itemize}
-  \item One reactor, three flows, three temperatures, equal dilute NaOH + ethyl acetate.
-  \item Readings on paper; analysis after the slot.
-  \item ``Why does \(X\) fall with flow?'' answered in words, never by trying it.
-\end{itemize}
+\subsection{What you actually built}
+A \textbf{web application}: open a browser, no separate desktop install. One site serves Batch, CSTR, PFR, RTD and a
+Design Studio. Live URL: \url{https://che331.streamlit.app}.
 
-\textbf{What went wrong in our own CSTR data}
-\begin{itemize}
-  \item Conductivity still drifting when we called it steady.
-  \item \(28\,^\circ\mathrm{C}\) gave higher conversion than \(40\,^\circ\mathrm{C}\).
-  \item We wrote ``unstable readings'' and moved on --- no tool to diagnose it.
-\end{itemize}
-
-\textbf{What we promised:} a laptop web app (no new hardware) that takes lab-sheet readings, fits them, updates plots
-live, drops textbook assumptions one by one, and tries series / recycle / non-isothermal scale-up.
-
-%---------------------------------------------------------------------
-\section{What you built (high level)}
-
-\begin{tabularx}{\textwidth}{@{}l l L@{}}
+\subsection{Tools (if they ask ``what did you use?'')}
+\begin{tabularx}{\textwidth}{@{}l L@{}}
 \toprule
-\textbf{Layer} & \textbf{What it is} & \textbf{What to say} \\
+\textbf{Piece} & \textbf{Role in plain words} \\
 \midrule
-Front end & Streamlit (Python web UI) & \say{Students open a browser; no desktop install.} \\
-Maths & NumPy + SciPy & \say{Same equations as Fogler / Levenspiel.} \\
-Plots & Plotly & \say{Interactive graphs; camera saves PNG.} \\
-Design board & HTML/JS canvas & \say{Drag feeds, tanks, tubes, splitters.} \\
-Hosted at & Streamlit Cloud & \url{https://che331.streamlit.app} \\
+Python & Language the whole project is written in. \\
+Streamlit & Turns Python into a clickable web page (inputs, tables, tabs). \\
+NumPy / SciPy & Numbers, fitting curves, solving ODEs (reactor profiles, Arrhenius, RTD). \\
+Pandas & Readings tables (rows of \(T\), flow, conductivity). \\
+Plotly & Interactive graphs (zoom, hover, save PNG). \\
+HTML/JS board & Drag-and-drop plant drawing in Design Studio. \\
+Streamlit Cloud & Free hosting so anyone with the link can open the app. \\
 \bottomrule
 \end{tabularx}
 
-\vspace{0.3cm}
-\textbf{One sentence:} an engine (models only) + pages (Batch, CSTR, PFR, RTD, Design Studio).
-
-\textbf{Same layout on every experiment page}
+\subsection{Architecture (one picture in words)}
 \begin{itemize}
-  \item \textbf{Left:} assumptions and run conditions
-  \item \textbf{Middle:} animated reactor + live curves
-  \item \textbf{Right:} results and diagnostics
-  \item \textbf{Below:} readings table (like the lab sheet)
-  \item \textbf{Tabs:} fits, assumption effects, sweeps, export
+  \item \textbf{Engine:} the chemistry and reactor equations only (no buttons). CSTR, PFR, batch, RTD, flowsheet solver.
+  \item \textbf{Pages:} what the student sees --- one page per experiment + Design Studio.
+  \item Same layout every experiment: \textbf{left} assumptions, \textbf{middle} live reactor, \textbf{right} results,
+  \textbf{below} readings table, \textbf{tabs} analysis and export.
 \end{itemize}
 
-%---------------------------------------------------------------------
-\section{Chemistry \& lab facts}
+\subsection{How a number reaches the screen}
+Student types conductivity \(\to\) app converts to conversion \(X\) \(\to\) builds the design-plot coordinate \(y\) \(\to\)
+fits a line to get \(k\) at that \(T\) \(\to\) Arrhenius across temperatures \(\to\) \(E_a\) and predictions. Every switch
+on the left changes the model and redraws.
 
-\textbf{Reaction:} NaOH + ethyl acetate \(\rightarrow\) sodium acetate + ethanol (saponification).
+\subsection{How you know it is correct}
+Analytic limits (ideal CSTR/PFR, RTD moments, recycle) plus replaying 2026 lab-report sheets with their own conventions
+(\(k\) and \(E_a\) match to four figures). Test suite: GitHub \texttt{tests} folder.
 
-\textbf{Why conductivity?} OH\(^-\) is highly conductive; as NaOH is consumed, \(\Lambda\) falls:
+%=====================================================================
+\section{Reference books and course material}
+
+Say these names if asked ``where do the models come from?''
+
+\begin{tabularx}{\textwidth}{@{}l L@{}}
+\toprule
+\textbf{Source} & \textbf{What you took from it} \\
+\midrule
+H.\,S.\ Fogler, \emph{Elements of Chemical Reaction Engineering} &
+Mole balances, CSTR/PFR design equations, Arrhenius, non-ideal reactors, energy balance / multiple steady states,
+Levenspiel plots, RTD (E, F, \(t_m\), \(\sigma^2\), tanks-in-series, dispersion / Pe). \\
+O.\ Levenspiel, \emph{Chemical Reaction Engineering} &
+Same reactor types; classic \(X\)--\(Da\) comparison; Levenspiel plot (area = size). \\
+CHE331 lab manuals (Batch, CSTR, PFR, RTD) &
+Observation-table layout, design-plot conventions, typed \(\Lambda_\infty\), how groups report \(k\) and \(E_a\). \\
+Ionic conductivity data (limiting molar conductivities) &
+Default \(\Lambda_\infty \approx 0.366\,\Lambda_0\) (OH\(^-\) replaced by acetate). \\
+\bottomrule
+\end{tabularx}
+
+\begin{tipbox}
+``I did not invent new reactor theory. I implemented the Fogler / Levenspiel balances and the lab-manual fitting
+workflow in software so students can use them \emph{during} the three-hour slot.''
+\end{tipbox}
+
+%=====================================================================
+\section{Chemistry and the link to conductivity}
+
+\textbf{Reaction (saponification):}
+\[
+\mathrm{NaOH + CH_3COOC_2H_5 \rightarrow CH_3COONa + C_2H_5OH}
+\]
+Usually treated as \(-r_A = k\,C_A C_B\). Equimolar feed \(\Rightarrow -r_A = k\,C_A^2\).
+
+\textbf{Why measure conductivity?} NaOH (OH\(^-\)) conducts strongly. As it is consumed, conductivity \(\Lambda\) falls.
 \[
 X = \frac{\Lambda_0 - \Lambda}{\Lambda_0 - \Lambda_\infty}
 \]
-\(\Lambda_0\) = feed / initial; \(\Lambda_\infty\) = complete conversion.
+\(\Lambda_0\): feed / start. \(\Lambda_\infty\): complete conversion. Too-low \(\Lambda_\infty\) \textbf{inflates \(X\)} and
+\textbf{shrinks \(k\)}. App default \(\approx 0.366\,\Lambda_0\); manuals often type 0.1 or 3.75\,mS/cm.
 
-\textbf{App default:} \(\Lambda_\infty \approx 0.366\,\Lambda_0\) from limiting ionic conductivities (acetate replaces
-hydroxide). Manuals often type a fixed value (0.1 or 3.75\,mS/cm).
+%=====================================================================
+\section{Mathematical models (what to write on the board)}
 
-\begin{tipbox}
-\(\Lambda_\infty\) that is too low \textbf{inflates \(X\)} and \textbf{deflates \(k\)}. Fitting from CSTR data gave
-\(\approx 0.30\,\Lambda_0\) --- close to the ion estimate --- and \(k\) at \(31\,^\circ\mathrm{C}\) rose from
-\(\sim 3.2\) to \(\sim 8.5\)\,L/mol·min. That is the best ``what did the app find that the report missed?'' answer.
-\end{tipbox}
+\subsection{Symbols you must know}
+\begin{tabularx}{\textwidth}{@{}ll L@{}}
+\toprule
+Symbol & Name & Meaning \\
+\midrule
+\(C_A, C_B\) & Concentrations & NaOH, ester (mol/L) \\
+\(C_{A0}\) & Feed concentration & After mixing, at reactor inlet \\
+\(X\) & Conversion & Fraction of NaOH reacted \\
+\(\tau = V/Q\) & Residence / space time & Tank or coil volume \(\div\) volumetric flow \\
+\(k\) & Rate constant & Units depend on order (2nd: L/mol·min) \\
+\(E_a, A\) & Activation energy, pre-factor & Arrhenius: \(k = A\,e^{-E_a/RT}\) \\
+\(\mathrm{Da}\) & Damköhler number & \(k\,C_{A0}^{n-1}\tau\) --- reaction speed vs flow speed \\
+\(M = C_{B0}/C_{A0}\) & Stoichiometric ratio & 1 = equimolar \\
+\(N\) & Tanks in series & From RTD: \(N = t_m^2/\sigma^2\) \\
+\(\mathrm{Pe}\) & Péclet number & Convection \(\div\) axial dispersion \\
+\bottomrule
+\end{tabularx}
 
-\textbf{Usual rate law:} \(-r_A = k\,C_A C_B\) (equimolar \(\Rightarrow k\,C_A^2\)).
+\subsection{Ideal CSTR (steady, isothermal, 2nd order, equimolar)}
+Mole balance: \(F_{A0}X = (-r_A)V\) with \(-r_A = k C_{A0}^2 (1-X)^2\).
+\begin{eqbox}
+\[
+\tau = \frac{X}{k\,C_{A0}(1-X)^2}
+\quad\Rightarrow\quad
+y = \frac{X}{(1-X)^2} = k\,C_{A0}\,\tau
+\]
+\end{eqbox}
+Plot \(y\) vs \(\tau\): slope \(= k\,C_{A0}\) \(\Rightarrow\) \(k\). (If \(M\neq 1\), \(y\) uses \((1-X)(M-X)\) form.)
 
-\textbf{Damköhler:} \(\mathrm{Da} = k\,C_{A0}^{n-1}\,\tau\) --- how fast reaction is vs how fast fluid moves through.
-
-%---------------------------------------------------------------------
-\section{Core concepts (speakable)}
-
-\subsection{CSTR}
-Ideal: outlet = tank contents. Design (2nd order, equimolar): plot \(y = X/(1-X)^2\) against \(\tau\); slope \(\to k\).
-Settling needs several \(\tau_r\), not ``one \(\tau\)''. Bypass / dead volume lower \(X\); tanks in series raise \(X\)
-toward plug flow.
-
-\subsection{PFR}
-Ideal: plug flow along the coil. Design: \(y = X/(1-X)\) vs \(\tau\). Sample delay in the beaker looks like a huge free
-intercept; the app models it as an explicit delay. Alternatives: dispersion (Pe), laminar, recycle, adiabatic.
+\subsection{Ideal PFR (plug flow, same kinetics)}
+\begin{eqbox}
+\[
+\tau = \int_0^X \frac{\mathrm{d}X'}{-r_A(X')}
+\quad\Rightarrow\quad
+y = \frac{X}{1-X} = k\,C_{A0}\,\tau
+\quad\text{(equimolar 2nd order)}
+\]
+\end{eqbox}
+Along the coil the app integrates the ODE \(\mathrm{d}C_A/\mathrm{d}V = r_A/Q\).
 
 \subsection{Batch}
-\(\kappa(t)\to C_A(t)\to\) fit \(k\). Differential method: slope of \(\ln(-\mathrm{d}C/\mathrm{d}t)\) vs \(\ln C\) is
-order \(n\). Our data: \(n\approx 1\), not 2 --- same as the report's differential method. Say: mixing dominates early
-points; after the window, first order wins by AIC.
-
-\subsection{RTD}
-Tracer \(\to E(t)\), \(t_m\), \(\sigma^2\). \(N = t_m^2/\sigma^2\). Ideal CSTR \(\Rightarrow N=1\). Packed bed: high Pe.
-If you cut the tail early, \(\sigma^2\) is too small and \(N\) looks too high (\(\sim 1.5\to\sim 1.2\) with a tail).
+Time from concentration: \(\mathrm{d}C_A/\mathrm{d}t = r_A\). Integral method: for 2nd order equimolar,
+\(1/C_A - 1/C_{A0} = k t\). Differential method: plot \(\ln(-\mathrm{d}C_A/\mathrm{d}t)\) vs \(\ln C_A\); slope \(\approx\) order \(n\).
 
 \subsection{Arrhenius}
-\(\ln k = \ln A - E_a/(RT)\). App gives 95\% intervals on \(E_a\) and \(A\).
+\begin{eqbox}
+\[
+\ln k = \ln A - \frac{E_a}{R}\,\frac{1}{T}
+\]
+\end{eqbox}
+Slope of \(\ln k\) vs \(1/T\) is \(-E_a/R\). App reports 95\% intervals.
 
-\subsection{Multiple steady states}
-Heat generation vs jacket removal can cross three times (two stable, one unstable) when the exotherm is strong and
-cooling is weak. Dilute lab feeds barely heat; the app's what-if uses concentrated feed + weak jacket.
+\subsection{Non-ideal CSTR (speak the idea)}
+\begin{itemize}
+  \item \textbf{Bypass \(\beta\):} fraction of feed skips the tank \(\Rightarrow\) lower overall \(X\).
+  \item \textbf{Dead volume \(\alpha\):} fraction of \(V\) inactive \(\Rightarrow\) smaller effective \(\tau\).
+  \item \textbf{\(N\) tanks in series:} same total \(V\), approaches PFR as \(N\) grows \(\Rightarrow\) higher \(X\).
+\end{itemize}
 
-%---------------------------------------------------------------------
-\section{How you know it works}
+\subsection{Non-ideal PFR}
+\begin{itemize}
+  \item \textbf{Axial dispersion:} Fogler open/closed vessel; characterised by Pe. High Pe \(\to\) plug flow.
+  \item \textbf{Laminar:} velocity profile across radius; conversion below ideal plug for the same \(\tau\).
+  \item \textbf{Sample delay:} reaction continues in the beaker; looks like a large free intercept on \(\tau\) vs \(y\).
+\end{itemize}
+
+\subsection{RTD}
+\begin{eqbox}
+\[
+E(t)=\frac{C(t)}{\int_0^\infty C\,\mathrm{d}t},\quad
+t_m=\int t E\,\mathrm{d}t,\quad
+\sigma^2=\int (t-t_m)^2 E\,\mathrm{d}t,\quad
+N=\frac{t_m^2}{\sigma^2}
+\]
+\end{eqbox}
+\(F(t)=\int_0^t E\,\mathrm{d}t\). Dimensionless \(E(\theta)\) with \(\theta=t/t_m\). Tail cut-off underestimates \(\sigma^2\)
+and inflates \(N\).
+
+\subsection{Energy balance (CSTR jacket)}
+At steady state, heat generation from reaction equals heat removal by the jacket \(UA(T-T_a)\) (plus sensible heat of
+flow). Plot generation and removal vs \(T\): one or three intersections \(\Rightarrow\) multiple steady states / runaway.
+
+\subsection{Flowsheet (Design Studio)}
+Each block uses the same rate law. Mixers and splitters conserve mass. Recycle: iterate until compositions stop changing.
+Overall \(X\) from all feeds to product. Mass balance on Na and acetyl groups must close (\(<10^{-8}\) relative).
+
+%=====================================================================
+\section{What every graph does}
+
+\subsection{CSTR / PFR Results tab}
+\begin{tabularx}{\textwidth}{@{}l L@{}}
+\toprule
+\textbf{Graph} & \textbf{What it shows / why it is there} \\
+\midrule
+Design plot (one \(T\)) & \(y\) vs \(\tau\) (or flipped). Line through points \(\to k\) at that temperature. Core of the manual. \\
+Design plot (all \(T\)) & Same axes, several temperatures. Steeper slope = larger \(k\). \\
+Arrhenius & \(\ln k\) vs \(1/T\). Slope \(\to E_a\). Proves temperature dependence is consistent. \\
+\(X\) vs total flow & Higher flow \(\Rightarrow\) smaller \(\tau\) \(\Rightarrow\) usually lower \(X\). \\
+\(X\) vs \(T\) & Higher \(T\) \(\Rightarrow\) larger \(k\) \(\Rightarrow\) usually higher \(X\). \\
+\(k\) from each run alone & Each point is \(k\) from one row. Flat vs \(\tau\) = consistent data; sloping = \(\Lambda_\infty\), delay, or unsteady. \\
+Parity (model vs measured \(X\)) & Points on the diagonal = fit is good. \\
+Residuals & Measured \(-\) model for each run; shows which runs disagree. \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Predictions panel}
+\begin{itemize}
+  \item \(X\) vs \(\tau\) at chosen \(T\): size the reactor mentally.
+  \item \(k\) vs \(T\): Arrhenius curve with your fitted points.
+  \item \(X\) vs \(C_{A0}\) for orders 1--3: all orders fit at the lab \(C_{A0}\); they split if concentration changes --- that
+  is how you tell order apart.
+\end{itemize}
+
+\subsection{Assumption effects}
+Bar chart of \(X\) under ideal vs bypass / dead volume / \(N\) tanks / stagnant / reversible. Answers ``what was that
+assumption costing me?''
+
+\subsection{Energy balance}
+Heat generation vs removal vs \(T\); phase portrait of trajectories. Shows multiple steady states and runaway basin.
+
+\subsection{PFR: conversion along coil; flow models}
+\(X(z/L)\): builds along the tube. Flow-models plot: same \(k\), different hydrodynamics, points overlaid.
+
+\subsection{Batch}
+\(C_A(t)\); integral plot (straight if order right); differential log--log (slope \(\approx n\)); residuals; AIC table ranking
+rate laws.
+
+\subsection{RTD}
+\(E(t)\) with \(t_m\) marked; overlay of all runs; \(E(\theta)\), \(F(t)\); model fits (tanks-in-series, dispersion) + residuals.
+
+\subsection{Design Studio}
+Profiles (\(C_A\), \(T\) vs cumulative \(V\)); Levenspiel \(1/(-r_A)\) vs \(X\) (area \(\propto\) size); sweep of one parameter;
+\(k(T)\) from every rig on one plot + ideal \(X\)--\(Da\) curves.
+
+%=====================================================================
+\section{Glossary --- terms the professor may ask}
+
+\begin{description}[style=nextline,leftmargin=0pt,font=\sffamily\bfseries\color{accent}]
+  \item[Residence time \(\tau\)] \(V/Q\). Average time fluid would spend if the vessel were ideally swept.
+  \item[Space time] Same as \(\tau\) for constant density liquid (Fogler).
+  \item[Conversion \(X\)] Fraction of limiting reactant (NaOH) that has reacted.
+  \item[Damköhler Da] Dimensionless rate \(\times\) time. Large Da \(\Rightarrow\) high \(X\) for a given reactor type.
+  \item[Design plot] Linearised kinetics plot (\(y\) vs \(\tau\)) whose slope gives \(k\).
+  \item[Arrhenius] How \(k\) depends on \(T\); gives \(E_a\).
+  \item[Activation energy \(E_a\)] Barrier; higher \(E_a\) \(\Rightarrow\) \(k\) rises faster with \(T\).
+  \item[Pre-exponential \(A\)] Arrhenius intercept factor (same units as \(k\)).
+  \item[Equimolar] \(C_{A0}=C_{B0}\) (\(M=1\)).
+  \item[Steady state] Properties no longer change with time. CSTR outlet conductivity flat.
+  \item[Transient / start-up] Approach to steady state after start or flow change.
+  \item[Bypass] Feed fraction that never enters the reacting volume.
+  \item[Dead volume] Stagnant fraction of \(V\) that does not participate.
+  \item[Tanks in series \(N\)] Ideal CSTRs chained; large \(N\) \(\approx\) PFR.
+  \item[RTD] Residence time distribution --- how long tracer molecules stay.
+  \item[\(E(t)\)] Exit age density; probability density of leaving at time \(t\).
+  \item[\(F(t)\)] Cumulative fraction that has left by time \(t\).
+  \item[Péclet Pe] Convective transport / axial dispersion. High Pe \(\approx\) plug flow.
+  \item[Levenspiel plot] \(1/(-r_A)\) vs \(X\); area related to reactor volume needed.
+  \item[Parity plot] Predicted vs measured; checks the fit visually.
+  \item[Residual] Measured minus model; should be small and random.
+  \item[AIC] Information criterion ranking models; lower is better (batch rate laws).
+  \item[Sample delay] Extra reaction time after the PFR outlet (beaker).
+  \item[Multiple steady states] More than one stable \(T\) (and \(X\)) for the same feeds/jacket.
+  \item[Runaway] Trajectory that jumps to the hot steady state.
+  \item[UA] Jacket heat-transfer coefficient \(\times\) area (cooling strength).
+\end{description}
+
+%=====================================================================
+\section{Page-by-page: what each experiment does}
+
+\subsection{CSTR}
+Simulate / animate tank; type lab-sheet readings; extrapolate to true steady \(\Lambda\); fit \(k(T)\) and \(E_a\);
+assumption switches; energy balance; export.
+
+\subsection{PFR}
+Coil profiles; average readings per flow; design plots; plug / dispersion / laminar / recycle / delay; Re and Dean from
+coil geometry.
+
+\subsection{Batch}
+\(\kappa(t)\to C_A\); choose rate law; clock offset; AIC comparison; Arrhenius if several \(T\).
+
+\subsection{RTD}
+Multi-run tracer sheet; moments; \(N\) and Pe (several conventions); tail warning; model ranking; conversion implied by
+the RTD.
+
+\subsection{Design Studio}
+Build series / recycle / bypass / two feeds / jacketed tank; share \(k\) from lab pages; streams, profiles, Levenspiel,
+sweep, compare rigs; save/load JSON.
+
+%=====================================================================
+\section{3-hour lab use (students + TA)}
 
 \begin{enumerate}
-  \item Closed-form limits (ideal CSTR/PFR, tanks\(\to\)plug flow, RTD moments, recycle) --- errors \(10^{-10}\) to \(10^{-16}\).
-  \item 2026 lab reports with \emph{their} conventions: \(k\) and \(E_a\) match to four figures.
-  \item Report readings are \textbf{not} built into the app (empty tables on start).
+  \item Open \url{https://che331.streamlit.app}, name the project.
+  \item Set \(V\), \(C_{A0}\), \(\Lambda_\infty\) mode to match the manual.
+  \item Run the experiment; type readings when due (CSTR stopwatch helps).
+  \item Check diagnostics: settled or not? \(k\) vs \(\tau\) flat?
+  \item Change flow/\(T\); watch Arrhenius fill in.
+  \item Toggle one assumption; see \(\Delta X\).
+  \item Publish kinetics \(\to\) Design Studio \(\to\) try series/recycle.
+  \item Export ZIP; Project \(\to\) Save JSON to share the session.
 \end{enumerate}
+
+%=====================================================================
+\section{Numbers to remember}
 
 \begin{center}\small
 \begin{tabular}{@{}ll@{}}
 \toprule
-CSTR \(E_a\) & 25.07\,kJ/mol \quad (\(k\): 3.16 / 5.85 / 7.44 at 31/46/60\,°C) \\
-PFR \(E_a\) & 12.70\,kJ/mol \quad (\(k\): 11.74 / 13.75 / 15.73 at 40/50/60\,°C) \\
-Design Studio demo & CSTR then PFR \(\Rightarrow X \approx 0.545\), balance \(<10^{-8}\) \\
+CSTR report match & \(E_a=25.07\)\,kJ/mol; \(k=3.16/5.85/7.44\) at 31/46/60\,°C \\
+PFR report match & \(E_a=12.70\)\,kJ/mol; \(k=11.74/13.75/15.73\) at 40/50/60\,°C \\
+Design Studio demo & CSTR\(\to\)PFR overall \(X\approx 0.545\) \\
+Default \(\Lambda_\infty/\Lambda_0\) & \(\approx 0.366\) (ions) \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-%---------------------------------------------------------------------
-\section{Every figure --- what it is and why}
+%=====================================================================
+\section{Short Q\&A}
 
-Use with \texttt{report.pdf}. If they point at a screenshot, say this.
-
-\subsection{Home}
-Landing cards for each experiment + Design Studio. Shows one app for all four labs.
-
-\subsection{CSTR overview}
-Assumption switches, animated tank, KPIs, fitted \(E_a/k\). Proves the live digital-twin layout.
-
-\subsection{CSTR readings}
-Lab-sheet table (\(T\), flow, \(\tau\), \(\Lambda_{1\ldots4}\)) + \(\Lambda_0\) per temperature. Matches the manual's
-observation table --- proposal point ``enter the readings''.
-
-\subsection{CSTR results}
-\(E_a\), \(A\), \(k(T)\), design plots, Arrhenius, \(X\) vs flow/\(T\), single-run \(k\) vs \(\tau\), parity, residuals.
-Everything a lab report needs. \textbf{Single-run \(k\) vs \(\tau\):} flat = consistent; sloping = bad \(\Lambda_\infty\),
-unsteady runs, or delay.
-
-\subsection{CSTR predictions}
-Sliders for \(T\), \(C_{A0}\), \(\tau\). Orders 1--3 all fit at the lab \(C_{A0}\); they separate only if concentration
-changes --- that is how order is told apart.
-
-\subsection{CSTR assumptions}
-Bar chart: ideal vs bypass / dead volume / 3 tanks / stagnant / reversible. Proposal: flip assumptions and \emph{see}
-the cost.
-
-\subsection{CSTR energy}
-Heat generation vs removal (three crossings) + phase portrait. Scale-up / runaway the dilute lab cannot show.
-
-\subsection{PFR overview / results / flow models}
-Coil animation and kinetics (\(E_a=12.70\)); full results grid; same \(k\) under plug / dispersion / laminar with
-points overlaid. Non-ideal tube without rebuilding the rig.
-
-\subsection{Batch overview / fit}
-\(C_A(t)\) and fitted \(k\); integral + differential plots, AIC ranking. Order is a choice, not an assumption.
-
-\subsection{RTD overview / all runs / model fits}
-\(E(t)\) + tail warning; four-run overlays; tanks-in-series vs dispersion ranked by error. Mixing quality \(\to N\), Pe,
-conversion.
-
-\subsection{Design Studio}
-Drag-and-drop plant (e.g.\ CSTR then PFR), stream/unit tables, \(X=0.545\). ``What the lab cannot do.''
-
-\subsection{Export}
-ZIP (HTML + CSV + plots + settings). Also: Project \(\to\) Save writes a \texttt{.reactorgenome.json} another student
-can Load --- share a Design Studio plant.
-
-%---------------------------------------------------------------------
-\section{How students and TAs use it in the 3-hour lab}
-
-\begin{labbox}
-Laptop beside the rig \(\to\) type readings live \(\to\) check settled \(\to\) fit \(k\) \(\to\) Design Studio \(\to\)
-export ZIP + save JSON.
-\end{labbox}
-
-\subsection{Before the slot (TA)}
-Open the live URL (or \texttt{run.bat} locally). Set project name = group. Remind: type what the manual already asks.
-Optional: load a previous group's JSON.
-
-\subsection{Timing}
-
-{\small
-\begin{tabularx}{\textwidth}{@{}c >{\raggedright\arraybackslash}p{2.2cm} L L@{}}
-\toprule
-\textbf{Time} & \textbf{Phase} & \textbf{Students} & \textbf{TA focus} \\
-\midrule
-0--15 min & Setup & \(V\), \(C_{A0}\), \(\Lambda_\infty\) mode, \(T\) & Concentrations match bottles \\
-15--40 & Run 1 & Start flow; type when due & Don't average a climbing \(\Lambda\) \\
-during & Live check & Watch transient / status & ``Has it settled?'' \\
-40--100 & More runs & Change \(Q\) or \(T\) & Point at \(k\) vs \(\tau\) if values drift \\
-100--130 & Assumptions & Toggle bypass / dispersion & ``Which assumption moves \(X\) most?'' \\
-130--160 & Beyond rig & Design Studio with fitted \(k\) & Series / recycle / same volume \\
-160--180 & Wrap-up & Export ZIP + Save JSON & Collect JSON if continuing at home \\
-\bottomrule
-\end{tabularx}}
-
-\subsection{TA coaching lines}
-\begin{itemize}
-  \item \textbf{CSTR:} low-\(T\) \(X\) \(>\) high-\(T\) \(X\) \(\Rightarrow\) readings still rising. Falling \(k\) with \(\tau\) \(\Rightarrow\) \(\Lambda_\infty\) too low.
-  \item \textbf{PFR:} nonsense free-line \(k\) \(\Rightarrow\) through-origin fit or turn on sample delay.
-  \item \textbf{Batch:} set window past mixing; if \(\kappa < \kappa_\infty\), fix typed \(\kappa_\infty\).
-  \item \textbf{RTD:} record to baseline or use tail correction; tank \(N\sim 1\)--2 vs bed high Pe.
-\end{itemize}
-
-\subsection{Design Studio (last half hour)}
-After a fit, second-order \(k\) and \(E_a\) are shared. Load preset ``CSTR then PFR'' (\(X\approx 0.545\)). Try recycle /
-bypass. Optional jacketed strong-exotherm what-if for multiple steady states. Save JSON to share the plant.
-
-\textbf{Board conceptually:} feeds, CSTRs, PFRs, beds, splitters, products; mass balances; recycle iterated to
-convergence; mass-balance error reported. Tabs: Streams, Profiles, Levenspiel, Sweep, Compare rigs, Export.
-
-%---------------------------------------------------------------------
-\section{Likely viva Q\&A}
-
-\begin{qabox}{What is ReactorGenome?}
-A browser digital twin for the four CHE331 reactor labs. Type existing readings; get fits, diagnostics, assumption
-checks, and a design sandbox.
+\begin{qabox}{Did you derive new kinetics?}
+No --- Fogler/Levenspiel mole balances and the lab-manual design plots, implemented and checked against reports.
 \end{qabox}
 
-\begin{qabox}{Why not Aspen / COMSOL?}
-Heavy, licensed, not built around this lab sheet and conductivity workflow. We needed something a group opens in
-minute one of a three-hour slot on a laptop.
+\begin{qabox}{Where does \(k\) come from?}
+From the slope of the design plot at each \(T\), then Arrhenius for \(E_a\) and \(A\).
 \end{qabox}
 
-\begin{qabox}{What is new vs Excel?}
-Live transient and steady-state judgement, ion-based \(\Lambda_\infty\), non-ideal models, shared \(k\) across rigs,
-flowsheet design, full export --- while typing, not after the lab.
+\begin{qabox}{What is Da?}
+\(\mathrm{Da}=k C_{A0}^{n-1}\tau\). Large Da means reaction is fast compared with the time fluid spends in the reactor.
 \end{qabox}
 
-\begin{qabox}{How is conversion obtained?}
-From conductivity with \(\Lambda_0\) and \(\Lambda_\infty\). Default from ion conductivities; typed value or fit from
-data also available.
+\begin{qabox}{Why can CSTR and PFR \(E_a\) differ between groups?}
+Different \(\Lambda_\infty\), scatter, sample delay, unsteady averages. App matches each report's method; fair comparison
+needs the same conventions (Compare rigs).
 \end{qabox}
 
-\begin{qabox}{How do you get \(k\) and \(E_a\)?}
-Design plot (\(y\) vs \(\tau\)) at each \(T\), then Arrhenius across temperatures, with 95\% intervals.
+\begin{qabox}{Best insight from the tool?}
+Low typed \(\Lambda_\infty\) and averaging before steady state explain weird numbers better than ``wrong kinetics.''
 \end{qabox}
 
-\begin{qabox}{What is Damköhler number here?}
-\(\mathrm{Da} = k\,C_{A0}^{n-1}\,\tau\). Large Da \(\Rightarrow\) high conversion for a given reactor type.
-\end{qabox}
-
-\begin{qabox}{CSTR \(E_a\) 25 vs PFR 12.7 --- why different?}
-Different groups, different \(\Lambda_\infty\) conventions, possible sample delay and scatter. The app matches each
-report's own method; honest comparison needs the same rules --- that is what Compare rigs is for.
-\end{qabox}
-
-\begin{qabox}{How do you know the maths is right?}
-Analytic limits + reproducing 2026 lab-report \(k\) and \(E_a\) to four significant figures; 130+ automated tests.
-\end{qabox}
-
-\begin{qabox}{What did the app reveal that reports missed?}
-(1) \(\Lambda_\infty\approx 0.3\,\Lambda_0\) fits CSTR better than 0.1\,mS/cm.
-(2) Temperature inversion was largely unsteady averaging.
-(3) RTD \(N\approx 1.5\) was mostly a cut-off tail.
-(4) Batch differential order \(\approx 1\).
-\end{qabox}
-
-\begin{qabox}{Bypass vs dead volume?}
-Bypass: fraction of feed never enters \(\Rightarrow\) dilutes product, lowers \(X\). Dead volume: part of \(V\)
-stagnant \(\Rightarrow\) smaller effective \(\tau\), lowers \(X\). Both on Assumption effects.
-\end{qabox}
-
-\begin{qabox}{Multiple steady states --- when?}
-Strong exotherm + limited cooling (finite \(UA\)). Generation and removal can intersect three times; middle state
-unstable.
-\end{qabox}
-
-\begin{qabox}{Can groups share work?}
-Project Save \(\to\) \texttt{.reactorgenome.json} \(\to\) Load project. Design Studio board and all tables restore.
-\end{qabox}
-
-\begin{qabox}{Limitations (be honest)?}
-Dead volume / stagnant zones are compared more than fully fitted (bypass can be fitted). Energy balance is a what-if
-for dilute labs. Only second-order \(k\) is shared across pages. Laptop-first; narrow phone tabs clip.
-\end{qabox}
-
-\begin{qabox}{How would a TA use it tomorrow?}
-Open today's experiment page, watch status while groups type, catch unsteady CSTR early, then push them into Design
-Studio with their own \(k\) in the last hour.
-\end{qabox}
-
-%---------------------------------------------------------------------
-\section{Five-minute demo script}
-
-\begin{enumerate}
-  \item \textbf{Problem} (45\,s) --- drifting CSTR readings; answers only in words.
-  \item \textbf{Demo Home \(\to\) CSTR} (90\,s) --- readings table \(\to\) Results (\(E_a\), plots).
-  \item \textbf{Assumption effects} (30\,s) --- flip bypass, show bar chart.
-  \item \textbf{Design Studio} (60\,s) --- CSTR then PFR, \(X=0.545\).
-  \item \textbf{Lab use + JSON} (45\,s) --- 3-hour workflow; Save/Load.
-  \item \textbf{Close} (30\,s) --- validated against reports; live at che331.streamlit.app.
-\end{enumerate}
-Keep \texttt{report.pdf} open on figures if Wi-Fi fails.
-
-%---------------------------------------------------------------------
-\section*{Last look before you walk in}
-
-\begin{itemize}[leftmargin=1.4em]
-  \item[\textcolor{ok}{$\checkmark$}] \textbf{What:} digital twin for Batch / CSTR / PFR / RTD + Design Studio.
-  \item[\textcolor{ok}{$\checkmark$}] \textbf{Input:} same readings as the manual.
-  \item[\textcolor{ok}{$\checkmark$}] \textbf{Output:} \(X\), \(k(T)\), \(E_a\), diagnostics, assumption costs, plants, ZIP.
-  \item[\textcolor{ok}{$\checkmark$}] \textbf{Key insight:} bad \(\Lambda_\infty\) and unsteady averages beat ``bad kinetics''.
-  \item[\textcolor{ok}{$\checkmark$}] \textbf{Lab use:} type live \(\to\) check settled \(\to\) fit \(\to\) design \(\to\) export.
-  \item[\textcolor{ok}{$\checkmark$}] \textbf{Stack if asked:} Python, Streamlit, NumPy/SciPy, Plotly; Streamlit Cloud.
-  \item[\textcolor{ok}{$\checkmark$}] \textbf{Not claiming:} new hardware, phone-perfect UI, or Aspen for industry plants.
-\end{itemize}
-
-\vspace{0.6cm}
+\vspace{0.5cm}
 \begin{center}
-\color{accent}\sffamily\bfseries Speak the pitch. Show Results + Design Studio. Defend the rest from this sheet.
+\color{accent}\sffamily\bfseries
+Know the pitch, the design-plot equation, Arrhenius, and what each Results graph is for.\\
+That is enough to explain the whole project.
 \end{center}
 
 \end{document}
