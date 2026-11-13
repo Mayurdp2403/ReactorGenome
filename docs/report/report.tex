@@ -35,7 +35,7 @@
 \setlength{\parskip}{3pt}
 \renewcommand{\arraystretch}{1.2}
 
-\newcommand{\shot}[3][\textwidth]{%
+\newcommand{\shot}[3][0.74\textwidth]{%
   \begin{figure}[!htbp]\centering
   \includegraphics[width=#1]{figures/#2}
   \caption{#3}\label{fig:#2}
@@ -88,7 +88,7 @@ The Results tab puts everything the lab report needs on one screen: $E_a$, $A$, 
 intervals, design plots, Arrhenius, conversion against flow and temperature, single-run $k$ against $\tau$, parity and
 residuals (Figure~\ref{fig:cstr_results}). The rate-law order (1 to 3) is a setting.
 
-\shot[0.86\textwidth]{cstr_results}{Results tab: kinetics and all of the report plots on one screen.}
+\shot[0.82\textwidth]{cstr_results}{Results tab: kinetics and all of the report plots on one screen.}
 
 The fitted $k(T)$ then predicts $X$ at any temperature, feed concentration and $\tau$. The right-hand plot shows why one
 concentration cannot pin down the order: every order fits the runs at the $C_{A0}$ used, and the orders separate only
@@ -115,7 +115,7 @@ geometry.
 
 \shot{pfr_overview}{PFR page with fitted kinetics ($E_a = 12.70$\,kJ/mol, as in the lab report).}
 
-\shot[0.86\textwidth]{pfr_results}{PFR results: design plots, Arrhenius, conversion against flow and temperature,
+\shot[0.82\textwidth]{pfr_results}{PFR results: design plots, Arrhenius, conversion against flow and temperature,
 parity and residuals.}
 
 \shot{pfr_flow_models}{The same $k$ under each flow picture, with the measured points at 50\,\textdegree C.}
@@ -193,5 +193,49 @@ that JSON; open it with Project $\rightarrow$ Load project. The Design Studio co
 pipes, volumes and kinetics---so groups can share plants without rebuilding them.
 
 \shot{export}{Export tab: ZIP report, HTML-only option, and the sections included.}
+
+%=====================================================================
+\section{Tools, model sources and tests}
+
+\subsection{What was used}
+
+The app is written in Python. The pages are a Streamlit web interface, so a group opens a browser rather than installing
+a desktop program. NumPy and SciPy do the fitting and the reactor solves (design-plot regression, Arrhenius, ODEs along
+a tube, RTD moments, recycle iteration). Pandas holds the readings tables. Plotly draws the graphs. The Design Studio
+board is a small drag-and-drop canvas. The public copy runs on Streamlit Community Cloud at
+\url{https://che331.streamlit.app}.
+
+The code is split in two. An engine holds only the balances and solvers. The pages call that engine and never put the
+equations in the buttons. Every experiment page uses the same layout: assumptions on the left, the live reactor in the
+middle, results on the right, the readings table underneath, then the analysis tabs.
+
+\subsection{Where the models come from}
+
+The balances are the standard ones in undergraduate reactor design, not a new rate law.
+
+\begin{itemize}
+  \item H.\,S.\ Fogler, \emph{Elements of Chemical Reaction Engineering}: mole balances for batch, CSTR and PFR; the
+  design equations used for the \(y\)--\(\tau\) plots; Arrhenius; non-ideal CSTR (bypass, dead volume, tanks in series);
+  axial dispersion and the Péclet number; the energy balance and multiple steady states; RTD moments \(E(t)\), \(F(t)\),
+  \(t_m\) and \(\sigma^2\).
+  \item O.\ Levenspiel, \emph{Chemical Reaction Engineering}: the Levenspiel plot (\(1/(-r_A)\) against \(X\)), conversion
+  against Damköhler number, and tanks in series approaching plug flow.
+  \item Limiting ionic conductivities (Na\(^+\), OH\(^-\), acetate): the default \(\Lambda_\infty \approx 0.366\,\Lambda_0\),
+  because acetate replaces hydroxide as the reaction proceeds. A typed \(\Lambda_\infty\) is still available.
+\end{itemize}
+
+Conductivity is turned into conversion by
+\(X = (\Lambda_0 - \Lambda)/(\Lambda_0 - \Lambda_\infty)\).
+For an equimolar second-order reaction the CSTR design coordinate is \(y = X/(1-X)^2\) and the PFR coordinate is
+\(y = X/(1-X)\); in both cases \(y = k\,C_{A0}\,\tau\) through the origin, so the slope is \(k\).
+\(k(T)\) then follows \(\ln k = \ln A - E_a/(RT)\).
+
+\subsection{Tests}
+
+Each model was checked against a closed-form limit before it was shown on a page: ideal CSTR and PFR conversions,
+tanks in series moving toward plug flow, RTD moments of known curves, and a CSTR-then-PFR flowsheet against the same
+two reactors solved one after the other (mass balance below \(10^{-8}\)). Invalid inputs and empty tables are included
+so a blank lab sheet does not crash a page. The suite is on GitHub:
+\href{https://github.com/Mayurdp2403/ReactorGenome/tree/main/tests}{ReactorGenome / tests}.
 
 \end{document}
